@@ -180,6 +180,8 @@ progress{flex:1 1 140px;min-width:0;accent-color:var(--accent)}
 .perf-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .perf-bar button,.perf-bar select{background:#161C2A;color:#E6E9F0;border-color:#2A3141}
 .perf-bar .primary{background:#A9BCF5;color:#10131A;border-color:#A9BCF5}
+.perf-check{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;color:#C9D1E2;padding:0 6px;cursor:pointer}
+.perf-check input{width:16px;height:16px;accent-color:#A9BCF5}
 .perf-status{margin:0;font-size:.88rem;color:#C9D1E2;text-align:center;min-height:1.3em}
 .perf-tip{margin:0;font-size:.78rem;color:#7C869C;text-align:center;max-width:52ch}
 .perf.recording .perf-tip{visibility:hidden}

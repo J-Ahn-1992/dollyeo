@@ -18,6 +18,7 @@ export function initPerf(app){
   const root = $('perf'), cv = $('perfCanvas'), ctx = cv.getContext('2d');
   const playBtn = $('perfPlay'), recBtn = $('perfRec'), saveBtn = $('perfSave'), status = $('perfStatus');
   let open = false, queue = [], particles = [], pulse = 0, lastT = 0, recording = false, video = null;
+  let build = null;   // 만드는 과정 다시보기 진행 상태
   const discGeo = {};
   const glowT = {};
   const host = window.STANDALONE ? location.host : SITE_HOST;
@@ -31,12 +32,61 @@ export function initPerf(app){
   function hide(){
     if (recording) return;
     open = false; root.hidden = true; document.body.classList.remove('perf-open');
-    particles = []; queue = [];
+    particles = []; queue = []; cancelBuild();
   }
-  function renderPlay(){ playBtn.textContent = player.playing ? '■ 정지' : '▶ 재생'; }
+  function renderPlay(){ playBtn.textContent = (player.playing || build) ? '■ 정지' : '▶ 재생'; }
+
+  // ---------- 만드는 과정 다시보기 ----------
+  // 첫 구간을 빈 원판에서 시작해 드럼 → 베이스 → 나머지 악기 순서로 코인을 하나씩 놓고, 다 놓으면 곡을 연주
+  function buildSteps(){
+    const sid = player.tl.order[0], sec = app.secById(sid);
+    const rank = inst => inst === 'drum' ? 0 : inst === 'bass' ? 1 : 2;
+    const tracks = S.song.tracks.map((tr, t) => ({ tr, t })).sort((a, b) => rank(a.tr.inst) - rank(b.tr.inst) || (a.t === S.sel.t) - (b.t === S.sel.t));
+    const steps = [];
+    tracks.forEach(({ tr, t }) => {
+      const part = sec.parts[t];
+      for (let d = 0; d < part.count; d++){
+        const g = part.discs[d].g, list = [];
+        g.forEach((row, r) => row.forEach((c, s) => { if (c) list.push({ t, d, r, s, c, inst: tr.inst, scale: tr.scale }); }));
+        list.sort((a, b) => a.s - b.s || a.r - b.r);
+        steps.push(...list);
+      }
+    });
+    return { sid, sec, steps };
+  }
+  function runBuild(){
+    cancelBuild();
+    const { sid, sec, steps } = buildSteps();
+    const total = Math.max(4, Math.min(12, steps.length * 0.16));
+    build = { sid, sec, steps, idx: 0, t0: performance.now() / 1000 + 0.6, gap: steps.length ? total / steps.length : 0, shown: new Map(), cur: {}, end: null, resolve: null };
+    renderPlay();
+    return new Promise(res => build.resolve = res);
+  }
+  function cancelBuild(){ if (build){ const r = build.resolve; build = null; if (r) r(false); } }
+  function buildTick(now){
+    const b = build, el = performance.now() / 1000 - b.t0;
+    while (b.idx < b.steps.length && el >= b.idx * b.gap){
+      const st = b.steps[b.idx++];
+      b.cur[st.t] = st.d;
+      b.shown.set(st.t + '|' + st.d + '|' + st.r + '|' + st.s, performance.now());
+      player.clink();
+      const lenQ = M.meterOf(b.sec.meter).q, slots = b.sec.parts[st.t].discs[st.d].g[0].length;
+      player.preview(st.inst, st.scale, st.r, { ...st.c, l: Math.min(st.c.l, 2) }, Math.min(st.c.l, 2) * lenQ / slots);
+      glowT[st.t] = 0.6;
+    }
+    if (b.idx >= b.steps.length){
+      if (b.end == null) b.end = el;
+      if (el - b.end > 0.9){ const r = b.resolve; build = null; r(true); renderPlay(); }
+    }
+  }
   $('perfOpen').addEventListener('click', show);
   $('perfClose').addEventListener('click', hide);
-  playBtn.addEventListener('click', () => { player.toggle(); renderPlay(); app.onPlayChange(); });
+  playBtn.addEventListener('click', () => {
+    if (build){ cancelBuild(); renderPlay(); return; }
+    if (player.playing){ player.stop(); renderPlay(); app.onPlayChange(); return; }
+    if ($('perfBuild').checked){ player.seek(0); runBuild().then(ok => { if (ok){ player.start(); renderPlay(); app.onPlayChange(); } }); renderPlay(); return; }
+    player.start(); renderPlay(); app.onPlayChange();
+  });
   document.addEventListener('keydown', e => { if (open && e.key === 'Escape') hide(); });
 
   // ---------- 코인이 울릴 때 효과 ----------
@@ -73,7 +123,20 @@ export function initPerf(app){
   function drawTrack(t, x, y, size, loc, sec, now){
     const tr = S.song.tracks[t], part = sec.parts[t];
     if (!part) return;
-    const d = loc.bar.b % part.count, disc = part.discs[d], slots = disc.g[0].length;
+    let d = loc.bar.b % part.count, disc = part.discs[d], pos = loc.frac * disc.g[0].length, drop = null;
+    if (build){
+      // 다시보기 중: 지금까지 놓인 코인만 보이고, 원판은 천천히 돎
+      d = build.cur[t] || 0;
+      const src = part.discs[d], shown = build.shown;
+      disc = { div: src.div, g: src.g.map((row, r) => row.map((c, s) => shown.has(t + '|' + d + '|' + r + '|' + s) ? c : null)) };
+      pos = ((performance.now() / 1000 - build.t0) * 0.35) % disc.g[0].length;
+      drop = (r, k) => {
+        const p = shown.get(t + '|' + d + '|' + r + '|' + k);
+        if (p == null) return 1;
+        return Math.min(1, (performance.now() - p) / 420);
+      };
+    }
+    const slots = disc.g[0].length;
     const info = M.ringInfo(tr.inst, tr.scale, S.song.mood);
     discGeo[t] = { x, y, size, rings: info.length, slots };
     ctx.save();
@@ -86,9 +149,10 @@ export function initPerf(app){
     }
     ctx.translate(x, y);
     drawDisc(ctx, size, {
-      info, grid: disc.g, spec: M.gridSpec(sec.meter, disc.div), pos: loc.frac * slots, needle: true, tok: PT,
+      info, grid: disc.g, spec: M.gridSpec(sec.meter, disc.div), pos, needle: true, tok: PT, drop,
       hubText: [INST[tr.inst].name, ''],
       flash: (r, k) => {
+        if (build) return 0;
         const h = app.lastHit.get(app.hitKey(loc.bar.sid, t, d, r, k));
         if (h == null) return 0;
         const a = now - h;
@@ -106,7 +170,9 @@ export function initPerf(app){
     while (queue.length && queue[0].time <= now + 0.01){ spawn(queue.shift().e); }
     if (queue.length > 400) queue = queue.slice(-200);
 
-    const tl = player.tl, loc = M.locate(tl, player.pos()), sec = app.secById(loc.bar.sid);
+    if (build) buildTick(now);
+    const tl = player.tl, loc = M.locate(tl, player.pos());
+    const sec = build ? build.sec : app.secById(loc.bar.sid);
 
     // 배경
     const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -126,7 +192,10 @@ export function initPerf(app){
     ctx.fillText(name, W / 2, 170);
     ctx.fillStyle = 'rgba(230,233,240,0.62)';
     ctx.font = '500 34px "IBM Plex Sans KR", sans-serif';
-    ctx.fillText('돌려돌려 작곡판으로 만든 곡', W / 2, 236);
+    let sub = '돌려돌려 작곡판으로 만든 곡';
+    if (build) sub = build.idx >= build.steps.length ? '완성! 이제 들어볼까요 ▶' : (build.idx === 0 ? '빈 원판에서 시작해요' : '코인 ' + build.idx + ' / ' + build.steps.length + '개');
+    if (build){ ctx.fillStyle = '#FFD25A'; ctx.font = '600 40px "IBM Plex Sans KR", sans-serif'; }
+    ctx.fillText(sub, W / 2, 236);
 
     // 원판: 고른 악기를 크게, 나머지는 아래에 작게
     const others = S.song.tracks.map((_, i) => i).filter(i => i !== S.sel.t);
@@ -198,7 +267,7 @@ export function initPerf(app){
     if (recording || !vMime) return;
     recording = true; video = null; saveBtn.hidden = true;
     root.classList.add('recording');
-    [recBtn, playBtn, $('perfClose'), $('perfLoops')].forEach(b => b.disabled = true);
+    [recBtn, playBtn, $('perfClose'), $('perfLoops'), $('perfBuild')].forEach(b => b.disabled = true);
     try {
       const loops = +$('perfLoops').value;
       player.stop(); player.seek(0);
@@ -210,13 +279,21 @@ export function initPerf(app){
       rec.ondataavailable = ev => { if (ev.data && ev.data.size) chunks.push(ev.data); };
       const done = new Promise(res => rec.onstop = res);
       rec.start(500);
+      let pre = 0;
+      if ($('perfBuild').checked){
+        const tb = performance.now();
+        status.textContent = '녹화 중 · 만드는 과정을 담는 중이에요';
+        const ok = await runBuild();
+        if (!ok) throw new Error('cancelled');
+        pre = (performance.now() - tb) / 1000;
+      }
       player.start(); renderPlay(); app.onPlayChange();
       // 곡을 정확히 정해진 횟수만큼 녹화하면 쇼츠에서 끊김 없이 반복돼 보임
       const dur = player.secondsOf(player.tl.totalQ) * loops, t0 = performance.now();
       await new Promise(res => {
         const tick = () => {
           const el = (performance.now() - t0) / 1000;
-          status.textContent = '녹화 중 ' + Math.min(Math.floor(el), Math.ceil(dur)) + ' / ' + Math.ceil(dur) + '초 · 화면을 켜 둔 채 기다려 주세요';
+          status.textContent = '녹화 중 ' + Math.min(Math.floor(el + pre), Math.ceil(dur + pre)) + ' / ' + Math.ceil(dur + pre) + '초 · 화면을 켜 둔 채 기다려 주세요';
           if (el >= dur + 0.05) res(); else setTimeout(tick, 100);
         };
         tick();
@@ -228,10 +305,10 @@ export function initPerf(app){
       saveBtn.hidden = false;
     } catch (e){
       status.textContent = '영상을 만들지 못했어요. 다시 시도해 주세요.';
-      player.stop(); renderPlay(); app.onPlayChange();
+      cancelBuild(); player.stop(); renderPlay(); app.onPlayChange();
     } finally {
       recording = false; root.classList.remove('recording');
-      [recBtn, playBtn, $('perfClose'), $('perfLoops')].forEach(b => b.disabled = false);
+      [recBtn, playBtn, $('perfClose'), $('perfLoops'), $('perfBuild')].forEach(b => b.disabled = false);
       recBtn.disabled = !vMime;
     }
   });
