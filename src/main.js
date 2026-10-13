@@ -23,7 +23,7 @@ if (IS_EN){
   const mf = document.querySelector('link[rel="manifest"]');
   if (mf) mf.setAttribute('href', 'manifest-en.webmanifest');
 }
-document.querySelectorAll('#langSwitch button').forEach(b => {
+document.querySelectorAll('.lang-switch button').forEach(b => {
   b.setAttribute('aria-pressed', b.dataset.lang === LANG);
   b.addEventListener('click', () => {
     if (b.dataset.lang === LANG) return;

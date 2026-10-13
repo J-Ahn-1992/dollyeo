@@ -256,7 +256,13 @@
 
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
   <div class="gate-card">
-    <h2 id="gateTitle">어떻게 시작할까요?</h2>
+    <div class="gate-top">
+      <h2 id="gateTitle">어떻게 시작할까요?</h2>
+      <div class="seg lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="ko" aria-pressed="true" lang="ko">한국어</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en">English</button>
+      </div>
+    </div>
     <p class="lead">언제든 화면 오른쪽 위에서 바꿀 수 있고, 만든 곡은 두 모드에서 그대로 열려요.</p>
     <div class="gate-options">
       <button type="button" class="gate-opt" data-mode="beginner">
