@@ -8,6 +8,7 @@ import { randomGrid } from './random.js';
 import { initSongs } from './songs.js';
 import { initExport } from './export.js';
 import { initGuide } from './guide.js';
+import { initPerf } from './perf.js';
 import { $, ls, readTokens, confirmTwice, fmtTime } from './util.js';
 
 // 독립 사이트(index.html)에서 열렸는지 표시. Claude 안에서는 app.html이 그대로 쓰임
@@ -76,7 +77,8 @@ fixSel();
 // ---------- 재생 ----------
 const lastHit = new Map();
 const hitKey = (sid, t, d, r, s) => sid + '|' + t + '|' + d + '|' + r + '|' + s;
-const player = createPlayer(() => S.song, (e, time) => lastHit.set(hitKey(e.sid, e.t, e.d, e.r, e.s), time));
+let perf = null;
+const player = createPlayer(() => S.song, (e, time) => { lastHit.set(hitKey(e.sid, e.t, e.d, e.r, e.s), time); if (perf) perf.onHit(e, time); });
 player.setBpm(S.song.bpm);
 
 // ---------- 저장·내보내기 ----------
@@ -84,6 +86,7 @@ const app = { S, player, persist, applySong, touch };
 const songs = initSongs(app);
 app.songs = songs;
 const exporter = initExport(app);
+perf = initPerf({ S, player, lastHit, hitKey, secById, exporter, onPlayChange: () => renderPlay() });
 
 function touch(){ S.dirty = true; S.isDemo = false; songs.renderSaveState(); persist(); }
 
@@ -164,6 +167,7 @@ $('rewind').addEventListener('click', () => { player.seek(0); S.orderSel = 0; re
 function renderPlay(){
   const t = player.playing ? '■ 정지' : '▶ 재생';
   playBtn.textContent = t; $('mPlay').textContent = t;
+  if (perf) perf.renderPlay();
 }
 $('mPlay').addEventListener('click', () => { player.toggle(); renderPlay(); });
 // 재생 버튼이 화면 밖으로 나가면 아래 고정 막대를 보여줌 (휴대폰 화면에서만 CSS로 보임)
@@ -182,7 +186,7 @@ function setMood(m){
 $('moodBright').addEventListener('click', () => setMood('bright'));
 $('moodDark').addEventListener('click', () => setMood('dark'));
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && e.target === document.body){ e.preventDefault(); player.toggle(); renderPlay(); }
+  if (e.code === 'Space' && (e.target === document.body || e.target.closest('#perf canvas'))){ e.preventDefault(); player.toggle(); renderPlay(); }
 });
 
 // ---------- 곡 구성 ----------
@@ -582,6 +586,8 @@ function frame(ts){
     const nt = readTokens(TOK), sig = JSON.stringify(nt);
     if (sig !== tokSig){ tok = nt; tokSig = sig; view.rebuild(false); }
   }
+  // 공연 모드가 열려 있으면 그 화면만 그림
+  if (perf.isOpen){ perf.frame(); requestAnimationFrame(frame); return; }
   const tl = player.tl, loc = M.locate(tl, player.pos()), bar = loc.bar;
 
   if (S.follow && player.playing){

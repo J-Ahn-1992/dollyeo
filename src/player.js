@@ -114,6 +114,14 @@ export function createPlayer(getSong, onHit){
     return off.startRendering();
   }
 
+  // 영상 녹화용: 실시간 소리를 그대로 받는 스트림
+  let tapDest = null;
+  function audioStream(){
+    ensure();
+    if (!tapDest){ tapDest = ac.createMediaStreamDestination(); eng.comp.connect(tapDest); }
+    return tapDest.stream;
+  }
+
   function preview(inst, scale, ring, c, durQ){
     ensure();
     const t = ac.currentTime + 0.01;
@@ -122,7 +130,7 @@ export function createPlayer(getSong, onHit){
   }
 
   return {
-    ensure, start, stop, seek, setBpm, rebuild, renderOffline, preview, pos,
+    ensure, start, stop, seek, setBpm, rebuild, renderOffline, preview, pos, audioStream,
     toggle(){ playing ? stop() : start(); },
     get playing(){ return playing; },
     get ac(){ return ac; },

@@ -19,6 +19,7 @@ export class Engine {
     this.master.gain.value = 0.6;
     this.master.connect(comp);
     comp.connect(ctx.destination);
+    this.comp = comp;
     const n = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = n.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;

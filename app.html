@@ -27,6 +27,7 @@
         <div class="row">
           <button id="play" class="primary" type="button">▶ 재생</button>
           <button id="rewind" type="button">⏮ 처음</button>
+          <button id="perfOpen" type="button">🎬 공연 모드</button>
           <span class="status num" id="posText"></span>
           <span class="spacer"></span>
           <div class="seg" role="group" aria-label="분위기">
@@ -209,6 +210,19 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="perf" id="perf" hidden role="dialog" aria-modal="true" aria-label="공연 모드">
+  <canvas id="perfCanvas" width="1080" height="1920" aria-label="공연 화면"></canvas>
+  <div class="perf-bar">
+    <button type="button" id="perfClose">✕ 닫기</button>
+    <button type="button" id="perfPlay" class="primary">▶ 재생</button>
+    <select id="perfLoops" aria-label="영상에 담을 반복 횟수"><option value="1">1번 반복</option><option value="2" selected>2번 반복</option><option value="4">4번 반복</option></select>
+    <button type="button" id="perfRec">🎥 영상 만들기</button>
+    <button type="button" id="perfSave" class="primary" hidden>영상 받기</button>
+  </div>
+  <p class="perf-status" id="perfStatus" aria-live="polite"></p>
+  <p class="perf-tip">악기 칸에서 고른 악기가 크게 나와요. 영상은 세로 9:16 크기라 쇼츠·릴스에 바로 올릴 수 있어요.</p>
 </div>
 
 <div class="mbar" id="mbar" hidden>

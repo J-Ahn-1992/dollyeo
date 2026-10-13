@@ -154,8 +154,8 @@ export function drawDisc(ctx, S, o){
   }
 
   if (o.needle){
-    const ny = g.c - g.R;
-    ctx.beginPath(); ctx.moveTo(g.c - 9, ny - 2); ctx.lineTo(g.c + 9, ny - 2); ctx.lineTo(g.c, ny + 14); ctx.closePath();
+    const ny = g.c - g.R, nw = Math.max(9, S * 0.022), nh = nw * 1.6;
+    ctx.beginPath(); ctx.moveTo(g.c - nw, ny - 2); ctx.lineTo(g.c + nw, ny - 2); ctx.lineTo(g.c, ny + nh); ctx.closePath();
     ctx.fillStyle = tok.needle; ctx.fill();
   }
   return g;

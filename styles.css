@@ -173,3 +173,14 @@ progress{flex:1 1 140px;min-width:0;accent-color:var(--accent)}
 .mbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));background:var(--panel);border-top:1px solid var(--border);box-shadow:0 -6px 20px rgba(0,0,0,.08)}
 .mbar .primary{min-width:110px}
 @media (min-width:640px){.mbar{display:none !important}}
+
+/* 공연 모드 */
+.perf{position:fixed;inset:0;z-index:50;background:#05070C;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));box-sizing:border-box;color:#E6E9F0;color-scheme:dark}
+.perf canvas{height:min(calc(100dvh - 150px), calc((100vw - 32px) * 16 / 9));aspect-ratio:9/16;width:auto;max-width:100%;border-radius:16px;box-shadow:0 0 0 1px #1E2638}
+.perf-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.perf-bar button,.perf-bar select{background:#161C2A;color:#E6E9F0;border-color:#2A3141}
+.perf-bar .primary{background:#A9BCF5;color:#10131A;border-color:#A9BCF5}
+.perf-status{margin:0;font-size:.88rem;color:#C9D1E2;text-align:center;min-height:1.3em}
+.perf-tip{margin:0;font-size:.78rem;color:#7C869C;text-align:center;max-width:52ch}
+.perf.recording .perf-tip{visibility:hidden}
+body.perf-open{overflow:hidden}

@@ -231,5 +231,13 @@ export function initExport(app){
     }
   });
 
-  return { setDownloads(d){ downloads = d; }, openFromLink };
+  // 다른 기능(공연 영상 등)이 파일을 내려받을 때 쓰는 공용 함수
+  async function saveFile(b, name){
+    if (SITE){ download(b, name); return 'site'; }
+    if (!downloads) throw { code: 'unavailable' };
+    await downloads.save({ filename: name, data: b });
+    return 'saved';
+  }
+
+  return { setDownloads(d){ downloads = d; }, openFromLink, saveFile };
 }
