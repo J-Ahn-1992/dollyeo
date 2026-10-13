@@ -17,3 +17,7 @@
 - `icons/`, `manifest.webmanifest` — 아이콘과 홈 화면 추가 설정
 
 빌드 도구 없이 그대로 올리면 되는 정적 사이트예요.
+
+## 저작권
+
+© 2026 J-Ahn-1992. All rights reserved. 저작권자의 허락 없이 복제·수정·배포할 수 없어요. 자세한 내용은 [LICENSE](LICENSE)를 보세요.

@@ -9,6 +9,8 @@ export const EN_DICT = {
   '원판의 칸을 눌러 코인을 올리고, 악기마다 원판을 쌓아 곡을 만들어 보세요.': 'Tap the disc to drop coins, stack a disc for each instrument, and you have a song.',
   '구간을 만들고 순서를 짜서 한 곡을 완성해 보세요. 박자표와 셋잇단음표, 7음과 ♯·♭도 쓸 수 있어요.': 'Build sections and arrange them into a full song. Time signatures, triplets, 7-note scales and ♯·♭ are all here.',
 
+  '© 2026 J-Ahn-1992 · 돌려돌려 작곡판 · 무단 복제·배포 금지': '© 2026 J-Ahn-1992 · Spin Spin Studio · All rights reserved',
+
   // ---------- 재생 ----------
   '▶ 재생': '▶ Play',
   '■ 정지': '■ Stop',
