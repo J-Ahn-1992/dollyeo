@@ -1,0 +1,123 @@
+/* Layout: overview towers (3D), song structure and shelf on the left; coin box and close-up disc editor (2D) on the right; one column on phones */
+:root{
+  --bg:#ECEEF2; --fg:#1A2030; --muted:#5A6377; --panel:#FFFFFF; --border:#D3D8E2;
+  --disc:#1D2433; --disc-line:#38425A; --slot:#4A5570; --hub:#F4F5F8; --hub-fg:#1D2433;
+  --needle:#1A2030; --accent:#24345F; --accent-fg:#FFFFFF; --shelf:#C9CFDB; --glow:#FFD25A;
+  --note:#2EC4B6; --chord:#B06EF0; --warn:#C2410C; --scrim:rgba(236,238,242,.86);
+  --display:"Do Hyeon","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10131A; --fg:#E6E9F0; --muted:#8B94A8; --panel:#181D28; --border:#2A3141;
+  --disc:#1B2130; --disc-line:#323B50; --slot:#465170; --hub:#2A3246; --hub-fg:#E6E9F0;
+  --needle:#E6E9F0; --accent:#A9BCF5; --accent-fg:#10131A; --shelf:#262D3C; --glow:#FFD25A;
+  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10131A; --fg:#E6E9F0; --muted:#8B94A8; --panel:#181D28; --border:#2A3141;
+  --disc:#1B2130; --disc-line:#323B50; --slot:#465170; --hub:#2A3246; --hub-fg:#E6E9F0;
+  --needle:#E6E9F0; --accent:#A9BCF5; --accent-fg:#10131A; --shelf:#262D3C; --glow:#FFD25A;
+  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); color-scheme:dark}
+
+[hidden]{display:none !important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:20px 32px}
+.app{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 320px}
+h1{font-family:var(--display);font-weight:400;font-size:2rem;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;text-wrap:balance}
+.lead{margin:0;color:var(--muted);font-size:.95rem;max-width:62ch}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:940px){.grid{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}}
+.left,.right{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.label{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.sublabel{font-size:.78rem;color:var(--muted);margin-bottom:-6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spacer{flex:1}
+.status{font-size:.85rem;color:var(--muted)}
+.hint{font-size:.84rem;color:var(--muted);margin:0}
+.hint:empty{display:none}
+.num{font-variant-numeric:tabular-nums}
+
+button,select{font-family:var(--body);font-size:.92rem;font-weight:500;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:40px}
+button:hover,select:hover{border-color:var(--muted)}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+#play{min-width:100px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-radius:0;background:transparent;display:inline-flex;align-items:center;gap:6px}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.mode-switch button{min-width:76px;justify-content:center}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.text-in,.name-in{flex:1 1 160px;min-width:0;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:6px 12px;min-height:40px;font-family:var(--body);font-size:.92rem}
+.name-in{font-family:var(--display);font-size:1.25rem}
+.tempo{display:flex;align-items:center;gap:10px;flex:none;min-width:0}
+.tempo input{flex:1;min-width:0;accent-color:var(--accent)}
+
+/* 초보자 모드에서는 숙련자 기능을 숨김 */
+.app[data-mode="beginner"] .expert{display:none !important}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{min-height:36px;padding:6px 12px;display:inline-flex;align-items:center;gap:8px}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tab b{font-family:var(--display);font-weight:400;font-size:1.05rem}
+.tab-sub{font-size:.75rem;opacity:.75}
+.tab .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--glow);visibility:hidden}
+.tab.playing .live{visibility:visible}
+
+/* 연주 순서 */
+.strip{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px dashed var(--border);border-radius:12px;background:var(--bg)}
+.blk{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;min-width:52px;min-height:52px;padding:4px 8px;background:var(--panel);line-height:1.1}
+.blk-id{font-family:var(--display);font-size:1.35rem}
+.blk-n{font-size:.7rem;color:var(--muted)}
+.blk[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.blk.playing{background:var(--glow);color:#1A2030;border-color:var(--glow)}
+.blk.playing .blk-n{color:#1A2030}
+
+.view3d{position:relative;width:100%;height:320px;border-radius:12px;overflow:hidden;background:var(--bg);touch-action:none}
+@media (min-width:940px){.view3d{height:400px}}
+.view3d canvas{display:block;width:100%;height:100%}
+.view3d .tip{position:absolute;left:10px;bottom:8px;right:10px;font-size:.76rem;color:var(--muted);pointer-events:none}
+.fallback{padding:24px;color:var(--muted);font-size:.9rem}
+
+.stage{position:relative;width:100%;max-width:520px;aspect-ratio:1/1;margin:0 auto}
+.stage canvas{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation;border-radius:50%}
+
+/* 코인 상자 */
+.coinbox{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.coinbox .seg{justify-self:start}
+.coinbox .seg button{min-height:36px;padding:6px 10px;font-size:.88rem}
+.ic{display:inline-block;width:14px;height:14px;border-radius:50%;flex:none}
+.ic.note{background:var(--note)} .ic.chord{background:var(--chord)}
+.ic.soft{width:12px;height:12px;border:3px solid currentColor;background:transparent}
+.ic.mid{background:currentColor}
+.ic.loud{background:currentColor;box-shadow:0 0 0 2px var(--panel),0 0 0 4px currentColor;width:12px;height:12px;margin:0 3px}
+.dis{opacity:.4;pointer-events:none}
+
+/* 내 곡 */
+.save-state{font-size:.85rem;color:var(--muted)}
+.save-state[data-dirty="true"]{color:var(--warn);font-weight:600}
+.song-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto}
+.song{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px}
+.song.current{border-color:var(--accent)}
+.song-info{flex:1;min-width:0}
+.song-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-meta{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song button{min-height:34px;padding:4px 10px;font-size:.85rem}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px 10px;resize:vertical}
+progress{flex:1 1 140px;min-width:0;accent-color:var(--accent)}
+
+/* 시작 화면 */
+.gate{position:fixed;inset:0;z-index:20;background:var(--scrim);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;overflow-y:auto}
+.gate-card{width:100%;max-width:660px;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+.gate-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.gate-opt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:18px;border-radius:14px;min-height:0;background:var(--bg)}
+.gate-opt:hover{border-color:var(--accent)}
+.gate-sub{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.gate-name{font-family:var(--display);font-size:1.6rem;margin-bottom:6px}
+.gate-item{font-size:.9rem;color:var(--muted)}
+.gate-item::before{content:"· "}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}

@@ -1,0 +1,131 @@
+// 재생 위치와 예약. 위치 단위는 4분음표(q), 곡 끝에서 처음으로 돌아가 반복
+import { Engine } from './audio.js';
+import { timeline, buildEvents } from './model.js';
+
+const LOOKAHEAD = 0.12;
+
+export function createPlayer(getSong, onHit){
+  let ac = null, eng = null, timer = null;
+  let playing = false, startTime = 0, pausePos = 0;
+  let schedQ = 0, idx = 0, cycle = 0;   // 어디까지 예약했는지 (절대 위치)
+  let tl = null, events = [], bpm = 96;
+  const qd = () => 60 / bpm;
+
+  function ensure(){
+    if (!ac){ ac = new (window.AudioContext || window.webkitAudioContext)(); eng = new Engine(ac); }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+  function data(){
+    const song = getSong();
+    tl = timeline(song);
+    events = buildEvents(song, tl);
+  }
+  const absPos = () => playing ? Math.max(0, (ac.currentTime - startTime) / qd()) : pausePos;
+  function pos(){ if (!tl) data(); return tl.totalQ ? absPos() % tl.totalQ : 0; }
+
+  function firstIdx(q){
+    let lo = 0, hi = events.length;
+    while (lo < hi){ const m = (lo + hi) >> 1; if (events[m].q < q - 1e-9) lo = m + 1; else hi = m; }
+    return lo;
+  }
+  function setCursor(absQ){
+    const T = tl.totalQ;
+    cycle = T ? Math.floor(absQ / T) : 0;
+    idx = firstIdx(absQ - cycle * T);
+    schedQ = absQ;
+  }
+
+  function tick(){
+    const T = tl.totalQ;
+    if (!T) return;
+    const horizon = (ac.currentTime + LOOKAHEAD - startTime) / qd();
+    const song = getSong();
+    let guard = 0;
+    while (events.length && guard++ < 4000){
+      if (idx >= events.length){ idx = 0; cycle++; }
+      const e = events[idx], aq = cycle * T + e.q;
+      if (aq >= horizon) break;
+      const t = startTime + aq * qd();
+      eng.playCoin(e.inst, e.scale, song.mood, e.r, e.c, t, e.durQ * qd());
+      if (onHit) onHit(e, t);
+      idx++;
+    }
+    schedQ = Math.max(schedQ, horizon);
+  }
+
+  function start(){
+    ensure(); data();
+    pausePos = tl.totalQ ? pausePos % tl.totalQ : 0;
+    startTime = ac.currentTime + 0.05 - pausePos * qd();
+    setCursor(pausePos);
+    playing = true;
+    timer = setInterval(tick, 25);
+    tick();
+  }
+  function stop(){
+    if (!playing) return;
+    pausePos = pos();
+    playing = false;
+    clearInterval(timer);
+  }
+  function seek(q){
+    if (!tl) data();
+    q = Math.max(0, Math.min(q, tl.totalQ - 1e-6));
+    if (playing){ startTime = ac.currentTime + 0.03 - q * qd(); setCursor(q); }
+    else pausePos = q;
+  }
+  function setBpm(v){
+    const p = playing ? absPos() : 0;
+    bpm = v;
+    if (playing) startTime = ac.currentTime - p * qd();
+  }
+
+  // 곡이 바뀌면 시간표를 다시 만들고, 지금 위치는 최대한 유지
+  function rebuild(){
+    const oldT = tl ? tl.totalQ : 0;
+    const p = playing ? absPos() : pausePos, h = schedQ;
+    data();
+    const T = tl.totalQ;
+    if (!playing){
+      pausePos = oldT ? pausePos % oldT : 0;
+      if (pausePos >= T) pausePos = 0;
+      return;
+    }
+    const cyc = oldT ? Math.floor(p / oldT) : 0;
+    const rel = p - cyc * oldT, ahead = Math.max(0, h - p);
+    const nr = rel < T ? rel : 0;
+    startTime = ac.currentTime - nr * qd();
+    setCursor(nr + ahead);
+  }
+
+  async function renderOffline(loops){
+    data();
+    const song = getSong(), T = tl.totalQ, q = qd();
+    const dur = 0.05 + T * loops * q + 2.5;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const off = new OAC(1, Math.ceil(dur * 44100), 44100);
+    const e2 = new Engine(off);
+    for (let k = 0; k < loops; k++){
+      for (const e of events) e2.playCoin(e.inst, e.scale, song.mood, e.r, e.c, 0.05 + (k * T + e.q) * q, e.durQ * q);
+    }
+    return off.startRendering();
+  }
+
+  function preview(inst, scale, ring, c, durQ){
+    ensure();
+    const t = ac.currentTime + 0.01;
+    eng.playCoin(inst, scale, getSong().mood, ring, c, t, durQ * qd());
+    return t;
+  }
+
+  return {
+    ensure, start, stop, seek, setBpm, rebuild, renderOffline, preview, pos,
+    toggle(){ playing ? stop() : start(); },
+    get playing(){ return playing; },
+    get ac(){ return ac; },
+    get tl(){ if (!tl) data(); return tl; },
+    now(){ return ac ? ac.currentTime : 0; },
+    secondsOf(q){ return q * qd(); }
+  };
+}
