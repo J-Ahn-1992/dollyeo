@@ -30,6 +30,14 @@ export function initSongs(app){
     stateEl.textContent = S.dirty ? '저장 안 된 변경이 있어요' : (S.currentId ? '저장됨' : '아직 저장 안 함');
     stateEl.dataset.dirty = S.dirty;
     modeEl.textContent = remote ? '내 계정에 저장돼요. 다른 기기에서 이 페이지를 열어도 보여요.' : '이 브라우저에만 저장돼요.';
+    // 저장된 곡의 이름을 바꾸면 저장 버튼이 새 곡으로 저장한다는 걸 알려줌
+    const renamed = isRenamed();
+    $('saveSong').textContent = renamed ? '새 곡으로 저장' : '저장';
+    if (renamed) stateEl.textContent = '이름이 바뀌어서 새 곡으로 저장돼요';
+  }
+  function isRenamed(){
+    const current = songs.find(s => s.id === S.currentId);
+    return !!current && (nameEl.value.trim() || '이름 없는 곡') !== current.name;
   }
 
   const fmtDate = ts => new Date(ts).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -61,14 +69,18 @@ export function initSongs(app){
 
   async function refresh(){
     try { songs = await store.list(); }
-    catch (e){ stateEl.textContent = '저장 목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.'; songs = []; }
+    catch (e){ stateEl.textContent = '저장 목록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.'; songs = []; renderList(); return; }
     renderList();
+    renderSaveState();
   }
 
   async function save(asNew){
     if (busy) return;
     let name = nameEl.value.trim() || '이름 없는 곡';
     const current = songs.find(s => s.id === S.currentId);
+    // 이름을 바꿔서 저장하면 원래 곡은 그대로 두고 새 곡으로 저장
+    const renamed = !asNew && isRenamed();
+    if (renamed) asNew = true;
     if (asNew && current && current.name === name) name += ' 사본';
     const id = (!asNew && S.currentId) || newId();
     const body = { name, updatedAt: Date.now(), bars: app.player.tl.bars.length, insts: S.song.tracks.map(t => t.inst), song: encodeSong(S.song) };
@@ -76,8 +88,8 @@ export function initSongs(app){
     try {
       await store.put(id, body);
       S.currentId = id; S.songName = name; nameEl.value = name; S.dirty = false; S.isDemo = false;
-      renderSaveState(); stateEl.textContent = '저장했어요';
       app.persist(); await refresh();
+      stateEl.textContent = renamed ? '새 곡으로 저장했어요. 원래 곡은 그대로 있어요' : '저장했어요';
     } catch (e){
       stateEl.textContent = e && e.code === 'quota_exceeded'
         ? '저장 공간이 가득 찼어요. 안 쓰는 곡을 지우고 다시 저장해 주세요.'
