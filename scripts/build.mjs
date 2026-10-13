@@ -23,6 +23,9 @@ const html = `<!doctype html>
 <link rel="manifest" href="manifest.webmanifest">
 ${headPart}
 <script>window.STANDALONE = true;</script>
+<!-- Vercel 방문자 통계 (Vercel 대시보드에서 Analytics를 켜야 동작) -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 ${bodyPart}
