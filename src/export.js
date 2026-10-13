@@ -85,7 +85,7 @@ export function initExport(app){
     if (!location.hash.startsWith('#song=')) return false;
     try {
       const got = await readLink(location.hash);
-      openShared(got, '공유받은 곡 "' + got.name + '"을 열었어요. 마음에 들면 저장을 눌러 내 곡에 넣으세요.');
+      openShared(got, '공유받은 곡을 열었어요: ' + got.name + '. 마음에 들면 저장을 눌러 내 곡에 넣으세요.');
       history.replaceState(null, '', location.pathname + location.search);
       return true;
     } catch (e){
