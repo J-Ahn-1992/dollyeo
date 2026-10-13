@@ -24,7 +24,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px
 .app{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
 .brand{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 320px}
-h1{font-family:var(--display);font-weight:400;font-size:2rem;margin:0;text-wrap:balance}
+h1{font-family:var(--display);font-weight:400;font-size:2rem;margin:0;text-wrap:balance;display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:11px;flex:none}
 h2{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;text-wrap:balance}
 .lead{margin:0;color:var(--muted);font-size:.95rem;max-width:62ch}
 .grid{display:grid;grid-template-columns:1fr;gap:16px}
