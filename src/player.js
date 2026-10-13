@@ -104,7 +104,9 @@ export function createPlayer(getSong, onHit){
     const song = getSong(), T = tl.totalQ, q = qd();
     const dur = 0.05 + T * loops * q + 2.5;
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    const off = new OAC(1, Math.ceil(dur * 44100), 44100);
+    // 실시간 재생과 같은 샘플레이트로 만들어야 녹음할 때 속도가 바뀌지 않음
+    const sr = ac ? ac.sampleRate : 44100;
+    const off = new OAC(1, Math.ceil(dur * sr), sr);
     const e2 = new Engine(off);
     for (let k = 0; k < loops; k++){
       for (const e of events) e2.playCoin(e.inst, e.scale, song.mood, e.r, e.c, 0.05 + (k * T + e.q) * q, e.durQ * q);
