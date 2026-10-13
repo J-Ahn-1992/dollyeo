@@ -76,6 +76,7 @@ fixSel();
 
 // ---------- 재생 ----------
 const lastHit = new Map();
+const placedAt = new Map();   // 코인을 놓은 시각 (떨어지는 애니메이션용)
 const hitKey = (sid, t, d, r, s) => sid + '|' + t + '|' + d + '|' + r + '|' + s;
 let perf = null;
 const player = createPlayer(() => S.song, (e, time) => { lastHit.set(hitKey(e.sid, e.t, e.d, e.r, e.s), time); if (perf) perf.onHit(e, time); });
@@ -528,8 +529,11 @@ canvas.addEventListener('pointerdown', e => {
     const c = M.coin(isDrum ? 'n' : tool.t, l, tool.v, (!isDrum && tr.scale === 7 && isExpert()) ? tool.a : 0);
     for (let i = 1; i < l; i++) disc.g[r][(k + i) % slots] = null;
     disc.g[r][k] = c;
+    player.clink();
     const t0 = player.preview(tr.inst, tr.scale, r, c, l * M.meterOf(sec.meter).q / slots);
-    lastHit.set(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k), t0);
+    lastHit.set(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k), t0 + 0.08);
+    placedAt.set(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k), performance.now());
+    if (navigator.vibrate) try { navigator.vibrate(12); } catch (err){}
   }
   coinsChanged();
 });
@@ -546,6 +550,13 @@ function draw2d(loc){
     info: M.ringInfo(tr.inst, tr.scale, S.song.mood), grid: disc.g, spec: M.gridSpec(sec.meter, disc.div),
     pos: edPos, needle: true, labels: true, tok,
     hubText: [INST[tr.inst].name, (S.song.sections.length > 1 ? sec.id + ' · ' : '') + (S.sel.d + 1) + '번 원판'],
+    drop: (r, k) => {
+      const p = placedAt.get(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k));
+      if (p == null) return 1;
+      const q = (performance.now() - p) / 420;
+      if (q >= 1){ placedAt.delete(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k)); return 1; }
+      return q;
+    },
     flash: (r, k) => {
       const h = lastHit.get(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k));
       if (h == null) return 0;

@@ -122,6 +122,8 @@ export function createPlayer(getSong, onHit){
     return tapDest.stream;
   }
 
+  function clink(){ ensure(); eng.clink(ac.currentTime + 0.005); }
+
   function preview(inst, scale, ring, c, durQ){
     ensure();
     const t = ac.currentTime + 0.01;
@@ -130,7 +132,7 @@ export function createPlayer(getSong, onHit){
   }
 
   return {
-    ensure, start, stop, seek, setBpm, rebuild, renderOffline, preview, pos, audioStream,
+    ensure, start, stop, seek, setBpm, rebuild, renderOffline, preview, pos, audioStream, clink,
     toggle(){ playing ? stop() : start(); },
     get playing(){ return playing; },
     get ac(){ return ac; },

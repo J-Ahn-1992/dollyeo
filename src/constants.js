@@ -3,10 +3,12 @@
 export const INST = {
   piano:    { name: '피아노', base: 60 },
   musicbox: { name: '오르골', base: 72 },
+  kalimba:  { name: '칼림바', base: 60 },
+  marimba:  { name: '마림바', base: 48 },
   bass:     { name: '베이스', base: 36 },
   drum:     { name: '드럼' }
 };
-export const INST_ORDER = ['musicbox', 'piano', 'bass', 'drum'];
+export const INST_ORDER = ['musicbox', 'piano', 'kalimba', 'marimba', 'bass', 'drum'];
 export const DRUMS = ['킥', '스네어', '박수', '닫힌 하이햇', '열린 하이햇'];
 
 // 음계: 5음(펜타토닉) / 7음. 값은 도(C)로부터의 반음 거리

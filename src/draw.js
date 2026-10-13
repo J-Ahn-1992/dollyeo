@@ -11,7 +11,15 @@ export function geom(S, rings, slots){
 // 칸 k의 각도. pos만큼 돌아가 있음 (바늘은 맨 위)
 export const slotAngle = (g, k, pos) => -Math.PI / 2 - (k - pos) * g.dA;
 
-export function drawCoin(ctx, x, y, R, c, col, fl){
+export function drawCoin(ctx, x, y, R, c, col, fl, drop = 1){
+  // drop: 0→1 코인이 위에서 떨어져 통통 튀며 자리 잡는 중
+  if (drop < 1){
+    const sh = 1 - drop;
+    ctx.beginPath(); ctx.arc(x, y, R * (1.1 + sh * 0.5), 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * sh) + ')'; ctx.fill();
+    R *= 1 + 0.9 * (1 - bounce(drop));
+    ctx.globalAlpha = Math.min(1, drop * 4);
+  }
   const rad = R * (1 + fl * 0.3);
   if (fl > 0){
     ctx.beginPath(); ctx.arc(x, y, rad * 1.7 + 4 * fl, 0, Math.PI * 2);
@@ -37,6 +45,14 @@ export function drawCoin(ctx, x, y, R, c, col, fl){
     ctx.strokeText(ACC[c.a], x, y + rad * 0.05);
     ctx.fillStyle = '#fff'; ctx.fillText(ACC[c.a], x, y + rad * 0.05);
   }
+  ctx.globalAlpha = 1;
+}
+function bounce(p){
+  const n = 7.5625, d = 2.75;
+  if (p < 1 / d) return n * p * p;
+  if (p < 2 / d) return n * (p -= 1.5 / d) * p + 0.75;
+  if (p < 2.5 / d) return n * (p -= 2.25 / d) * p + 0.9375;
+  return n * (p -= 2.625 / d) * p + 0.984375;
 }
 
 // o: { info, grid, spec:{slots,strong,mid}, pos, needle, labels, hubText, flash(r,k), tok }
@@ -122,7 +138,7 @@ export function drawDisc(ctx, S, o){
       const c = grid[r][k];
       if (!c) continue;
       const a = slotAngle(g, k, pos);
-      drawCoin(ctx, g.c + Math.cos(a) * rr, g.c + Math.sin(a) * rr, g.coin, c, c.t === 'c' ? tok.chord : tok.note, o.flash ? o.flash(r, k) : 0);
+      drawCoin(ctx, g.c + Math.cos(a) * rr, g.c + Math.sin(a) * rr, g.coin, c, c.t === 'c' ? tok.chord : tok.note, o.flash ? o.flash(r, k) : 0, o.drop ? o.drop(r, k) : 1);
     }
   }
 
