@@ -75,6 +75,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .tempo{display:flex;align-items:center;gap:10px;flex:none;min-width:0}
 .tempo input{flex:1;min-width:0;accent-color:var(--accent)}
 
+/* 독립 사이트에서만 쓰는 기능 */
+html:not(.site) .site-only{display:none !important}
+
 /* 초보자 모드에서는 숙련자 기능을 숨김 */
 .app[data-mode="beginner"] .expert{display:none !important}
 

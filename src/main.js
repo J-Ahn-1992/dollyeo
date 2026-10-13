@@ -10,6 +10,9 @@ import { initExport } from './export.js';
 import { initGuide } from './guide.js';
 import { $, ls, readTokens, confirmTwice, fmtTime } from './util.js';
 
+// 독립 사이트(index.html)에서 열렸는지 표시. Claude 안에서는 app.html이 그대로 쓰임
+if (window.STANDALONE) document.documentElement.classList.add('site');
+
 const TOK = ['bg', 'fg', 'muted', 'disc', 'disc-line', 'slot', 'hub', 'hub-fg', 'needle', 'accent', 'shelf', 'glow', 'note', 'chord'];
 let tok = readTokens(TOK), tokSig = JSON.stringify(tok);
 
@@ -620,6 +623,9 @@ if (!mode) $('gate').hidden = false;
 else if (!guide.done(mode)) setTimeout(() => guide.start(mode), 700);
 if (document.fonts) document.fonts.ready.then(() => { view.rebuild(false); });
 requestAnimationFrame(frame);
+
+// 공유 링크로 열었으면 그 곡을 불러옴
+exporter.openFromLink();
 
 // 계정 저장소와 파일 저장 연결 (Claude 화면에서 열었을 때만)
 (async () => {

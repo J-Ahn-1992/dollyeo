@@ -1,0 +1,244 @@
+<title>돌려돌려 작곡판</title>
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<div class="app" id="app" data-mode="beginner">
+  <header class="top">
+    <div class="brand">
+      <h1><img class="logo" src="icons/icon.svg" alt="" width="44" height="44">돌려돌려 작곡판</h1>
+      <p class="lead" id="lead"></p>
+    </div>
+    <div class="top-tools">
+    <button type="button" id="helpBtn">안내 보기</button>
+    <div class="seg mode-switch" id="modeSwitch" role="group" aria-label="모드">
+      <button type="button" data-mode="beginner" aria-pressed="true">초보자</button>
+      <button type="button" data-mode="expert" aria-pressed="false">숙련자</button>
+    </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="left">
+      <div class="panel" id="pTransport">
+        <div class="row">
+          <button id="play" class="primary" type="button">▶ 재생</button>
+          <button id="rewind" type="button">⏮ 처음</button>
+          <span class="status num" id="posText"></span>
+          <span class="spacer"></span>
+          <div class="seg" role="group" aria-label="분위기">
+            <button id="moodBright" type="button" aria-pressed="true">밝게</button>
+            <button id="moodDark" type="button" aria-pressed="false">어둡게</button>
+          </div>
+        </div>
+        <div class="tempo">
+          <label class="label" for="tempo">빠르기</label>
+          <input id="tempo" type="range" min="60" max="160" step="1" value="96">
+          <span class="num" id="bpm">96 BPM</span>
+          <button type="button" class="help" data-help="play" aria-label="재생 설명" aria-expanded="false">?</button>
+        </div>
+      </div>
+
+      <div class="panel" id="arrangePanel">
+        <div class="row">
+          <span class="label">곡 구성</span><button type="button" class="help" data-help="arrange" aria-label="곡 구성 설명" aria-expanded="false">?</button>
+          <span class="status num" id="arrTotal"></span>
+          <span class="spacer"></span>
+          <label class="check"><input type="checkbox" id="follow"> 재생 따라가기</label>
+        </div>
+        <span class="sublabel">구간 · 눌러서 편집할 구간을 골라요</span>
+        <div class="tabs" id="secTabs" role="tablist" aria-label="구간 선택"></div>
+        <div class="row expert">
+          <button id="secAdd" type="button">+ 새 구간</button>
+          <button id="secDup" type="button">이 구간 복제</button>
+          <button id="secDel" type="button">이 구간 삭제</button>
+        </div>
+        <div class="row expert">
+          <input id="secLabel" class="text-in" type="text" maxlength="12" placeholder="구간 이름 (예: 후렴)" aria-label="구간 이름" autocomplete="off">
+          <span class="label" id="lblMeter">박자</span>
+          <div class="seg" id="segMeter" role="group" aria-labelledby="lblMeter">
+            <button type="button" data-v="4/4" aria-pressed="true">4/4</button>
+            <button type="button" data-v="3/4" aria-pressed="false">3/4</button>
+            <button type="button" data-v="6/8" aria-pressed="false">6/8</button>
+          </div>
+          <button type="button" class="help" data-help="meter" aria-label="박자 설명" aria-expanded="false">?</button>
+        </div>
+        <p class="hint" id="arrMsg" aria-live="polite"></p>
+        <span class="sublabel">연주 순서 · 왼쪽부터 차례로 연주해요</span>
+        <div class="strip" id="orderStrip"></div>
+        <div class="row expert">
+          <button id="ordAdd" type="button">+ 구간 넣기</button>
+          <button id="ordLeft" type="button" aria-label="고른 칸을 앞으로">◀ 앞으로</button>
+          <button id="ordRight" type="button" aria-label="고른 칸을 뒤로">뒤로 ▶</button>
+          <button id="ordDel" type="button">순서에서 빼기</button>
+        </div>
+      </div>
+
+      <div class="panel" id="p3d">
+        <div class="row"><span class="label">전체 구조</span><button type="button" class="help" data-help="view3d" aria-label="전체 구조 설명" aria-expanded="false">?</button><span class="status">아래부터 1번 원판</span><span class="spacer"></span><button id="resetView" type="button">전체 보기</button></div>
+        <div class="view3d" id="view3d"><span class="tip">드래그: 돌리기 · 두 손가락(오른쪽 버튼) 드래그: 이동 · 원판을 누르면 편집</span></div>
+      </div>
+
+      <div class="panel" id="pSongs">
+        <div class="row"><span class="label">내 곡</span><button type="button" class="help" data-help="songs" aria-label="내 곡 설명" aria-expanded="false">?</button><span class="spacer"></span><span class="save-state" id="saveState" aria-live="polite"></span></div>
+        <div class="row">
+          <input id="songName" class="name-in" type="text" maxlength="40" aria-label="곡 이름" autocomplete="off">
+          <button id="saveSong" class="primary" type="button">저장</button>
+          <button id="saveAs" type="button">다른 이름으로 저장</button>
+          <button id="newSong" type="button">새 곡</button>
+        </div>
+        <div class="song-list" id="songList"></div>
+        <p class="hint" id="saveMode"></p>
+      </div>
+
+      <div class="panel" id="pExport">
+        <div class="row"><span class="label">내보내기 · 공유</span><button type="button" class="help" data-help="export" aria-label="내보내기 설명" aria-expanded="false">?</button></div>
+        <div class="row">
+          <label class="label" for="loops">반복</label>
+          <select id="loops"><option value="1">1번</option><option value="2" selected>2번</option><option value="4">4번</option></select>
+          <div class="seg site-only" id="segFmt" role="group" aria-label="파일 형식">
+            <button type="button" data-v="mp3" aria-pressed="true">MP3</button>
+            <button type="button" data-v="wav" aria-pressed="false">WAV</button>
+          </div>
+          <button id="makeAudio" type="button">🎧 오디오 파일 만들기</button>
+          <button id="saveAudio" class="primary" type="button" hidden>파일 저장하기</button>
+        </div>
+        <div class="row" id="audioProgressRow" hidden><progress id="audioProgress" max="1" value="0"></progress><span class="status num" id="audioStatus"></span></div>
+        <p class="hint" id="audioNote">MP4 파일로 만들어요. 곡을 실제 길이만큼 녹음하기 때문에 곡 길이만큼 기다려야 하고, 그동안은 소리가 나지 않아요.</p>
+        <div class="row">
+          <button id="copyLink" class="site-only" type="button">🔗 공유 링크 복사</button>
+          <button id="copyCode" type="button">곡 코드 복사</button>
+          <span class="status" id="codeStatus" aria-live="polite"></span>
+        </div>
+        <textarea id="codeIn" aria-label="받은 곡 코드" placeholder="친구에게 받은 곡 코드를 여기에 붙여넣으세요"></textarea>
+        <div class="row"><button id="loadCode" type="button">코드로 불러오기</button></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel" id="pTracks">
+        <div class="row"><span class="label">악기</span><button type="button" class="help" data-help="tracks" aria-label="악기 설명" aria-expanded="false">?</button><span class="spacer"></span><button id="addTrack" type="button">+ 악기 추가</button></div>
+        <div class="tabs" id="trackTabs" role="tablist" aria-label="악기 선택"></div>
+        <div class="row">
+          <label class="label" for="inst">종류</label>
+          <select id="inst">
+            <option value="piano">피아노</option>
+            <option value="musicbox">오르골</option>
+            <option value="bass">베이스</option>
+            <option value="drum">드럼</option>
+          </select>
+          <label class="label" for="count">원판 수</label>
+          <select id="count">
+            <option value="1">1장</option><option value="2">2장</option><option value="4">4장</option><option value="8">8장</option>
+          </select>
+          <span class="spacer"></span>
+          <button id="mute" type="button" aria-pressed="false">음소거</button>
+          <button id="delTrack" type="button">악기 삭제</button>
+        </div>
+        <div class="row expert">
+          <span class="label" id="lblScale">음계</span>
+          <div class="seg" role="group" aria-labelledby="lblScale" id="segScale">
+            <button type="button" data-v="5" aria-pressed="true">5음 쉬움</button>
+            <button type="button" data-v="7" aria-pressed="false">7음 전체</button>
+          </div>
+          <button type="button" class="help" data-help="scale" aria-label="음계 설명" aria-expanded="false">?</button>
+        </div>
+      </div>
+
+      <div class="panel" id="pDisc">
+        <div class="row"><span class="label">원판</span><button type="button" class="help" data-help="disc" aria-label="원판 설명" aria-expanded="false">?</button><span class="status" id="discSection"></span><span class="spacer"></span><span class="status" id="discStatus"></span></div>
+        <div class="tabs" id="discTabs" role="tablist" aria-label="원판 선택"></div>
+        <div class="row expert" id="divRow">
+          <span class="label" id="lblDiv">박 쪼개기</span>
+          <div class="seg" id="segDiv" role="group" aria-labelledby="lblDiv">
+            <button type="button" data-v="s" aria-pressed="true">기본</button>
+            <button type="button" data-v="t" aria-pressed="false">셋잇단</button>
+          </div>
+          <span class="status" id="divInfo"></span>
+          <button type="button" class="help" data-help="div" aria-label="박 쪼개기 설명" aria-expanded="false">?</button>
+        </div>
+
+        <div class="row coinhead"><span class="label">코인 상자</span><button type="button" class="help" data-help="coin" aria-label="코인 상자 설명" aria-expanded="false">?</button></div>
+        <div class="coinbox" aria-label="코인 상자">
+          <span class="label" id="lblType">종류</span>
+          <div class="seg" role="group" aria-labelledby="lblType" id="segType">
+            <button type="button" data-v="n" aria-pressed="true"><span class="ic note"></span>한 음</button>
+            <button type="button" data-v="c" aria-pressed="false"><span class="ic chord"></span>화음</button>
+          </div>
+          <span class="label" id="lblVel">세기</span>
+          <div class="seg" role="group" aria-labelledby="lblVel" id="segVel">
+            <button type="button" data-v="0" aria-pressed="false"><span class="ic soft"></span>여리게</button>
+            <button type="button" data-v="1" aria-pressed="true"><span class="ic mid"></span>보통</button>
+            <button type="button" data-v="2" aria-pressed="false"><span class="ic loud"></span>세게</button>
+          </div>
+          <span class="label" id="lblAcc" data-acc>반음</span>
+          <div class="seg" role="group" aria-labelledby="lblAcc" id="segAcc" data-acc>
+            <button type="button" data-v="-1" aria-pressed="false">♭ 내림</button>
+            <button type="button" data-v="0" aria-pressed="true">그대로</button>
+            <button type="button" data-v="1" aria-pressed="false">♯ 올림</button>
+          </div>
+          <span class="label" id="lblLen">길이</span>
+          <div class="seg" role="group" aria-labelledby="lblLen" id="segLen">
+            <button type="button" data-v="1" aria-pressed="true">1칸</button>
+            <button type="button" data-v="2" aria-pressed="false">2칸</button>
+            <button type="button" data-v="4" aria-pressed="false">4칸</button>
+            <button type="button" data-v="8" aria-pressed="false">8칸</button>
+          </div>
+        </div>
+
+        <div class="row zoom-row">
+          <span class="label" id="lblZoom">원판 확대</span>
+          <div class="seg" id="segZoom" role="group" aria-labelledby="lblZoom">
+            <button type="button" data-z="1" aria-pressed="true">1배</button>
+            <button type="button" data-z="1.5" aria-pressed="false">1.5배</button>
+            <button type="button" data-z="2" aria-pressed="false">2배</button>
+          </div>
+          <span class="status zoom-tip">확대하면 원판을 밀어서 움직일 수 있어요</span>
+        </div>
+        <div class="stage-scroll" id="stageScroll"><div class="stage" id="stage"><canvas id="disc" aria-label="선택한 원판. 빈 칸을 누르면 코인 상자에서 고른 코인이 놓이고, 놓인 코인을 누르면 빠집니다."></canvas></div></div>
+        <div class="row">
+          <button id="dice" type="button">🎲 랜덤</button>
+          <button id="copyPrev" type="button">앞 원판 복사</button>
+          <button id="clear" type="button">이 원판 지우기</button>
+        </div>
+        <p class="hint" id="discMsg" aria-live="polite"></p>
+        <p class="hint" id="discHint"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mbar" id="mbar" hidden>
+  <button type="button" id="mPlay" class="primary">▶ 재생</button>
+  <span class="status num" id="mPos"></span>
+</div>
+
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-card">
+    <h2 id="gateTitle">어떻게 시작할까요?</h2>
+    <p class="lead">언제든 화면 오른쪽 위에서 바꿀 수 있고, 만든 곡은 두 모드에서 그대로 열려요.</p>
+    <div class="gate-options">
+      <button type="button" class="gate-opt" data-mode="beginner">
+        <span class="gate-sub">초보자 모드</span>
+        <span class="gate-name">처음이에요</span>
+        <span class="gate-item">어디에 놓아도 어울리는 5개 음</span>
+        <span class="gate-item">4/4박자 원판</span>
+        <span class="gate-item">꼭 필요한 버튼만</span>
+      </button>
+      <button type="button" class="gate-opt" data-mode="expert">
+        <span class="gate-sub">숙련자 모드</span>
+        <span class="gate-name">음악을 조금 알아요</span>
+        <span class="gate-item">7음과 ♯·♭</span>
+        <span class="gate-item">3/4·6/8박자와 셋잇단음표</span>
+        <span class="gate-item">A·B 구간과 연주 순서</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script type="module" src="src/main.js"></script>
