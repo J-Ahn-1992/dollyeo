@@ -21,7 +21,7 @@
 
   <div class="grid">
     <div class="left">
-      <div class="panel">
+      <div class="panel" id="pTransport">
         <div class="row">
           <button id="play" class="primary" type="button">▶ 재생</button>
           <button id="rewind" type="button">⏮ 처음</button>
@@ -75,12 +75,12 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="p3d">
         <div class="row"><span class="label">전체 구조</span><button type="button" class="help" data-help="view3d" aria-label="전체 구조 설명" aria-expanded="false">?</button><span class="status">아래부터 1번 원판</span><span class="spacer"></span><button id="resetView" type="button">전체 보기</button></div>
         <div class="view3d" id="view3d"><span class="tip">드래그: 돌리기 · 두 손가락(오른쪽 버튼) 드래그: 이동 · 원판을 누르면 편집</span></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="pSongs">
         <div class="row"><span class="label">내 곡</span><button type="button" class="help" data-help="songs" aria-label="내 곡 설명" aria-expanded="false">?</button><span class="spacer"></span><span class="save-state" id="saveState" aria-live="polite"></span></div>
         <div class="row">
           <input id="songName" class="name-in" type="text" maxlength="40" aria-label="곡 이름" autocomplete="off">
@@ -92,7 +92,7 @@
         <p class="hint" id="saveMode"></p>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="pExport">
         <div class="row"><span class="label">내보내기 · 공유</span><button type="button" class="help" data-help="export" aria-label="내보내기 설명" aria-expanded="false">?</button></div>
         <div class="row">
           <label class="label" for="loops">반복</label>
@@ -112,7 +112,7 @@
     </div>
 
     <div class="right">
-      <div class="panel">
+      <div class="panel" id="pTracks">
         <div class="row"><span class="label">악기</span><button type="button" class="help" data-help="tracks" aria-label="악기 설명" aria-expanded="false">?</button><span class="spacer"></span><button id="addTrack" type="button">+ 악기 추가</button></div>
         <div class="tabs" id="trackTabs" role="tablist" aria-label="악기 선택"></div>
         <div class="row">
@@ -141,7 +141,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="pDisc">
         <div class="row"><span class="label">원판</span><button type="button" class="help" data-help="disc" aria-label="원판 설명" aria-expanded="false">?</button><span class="status" id="discSection"></span><span class="spacer"></span><span class="status" id="discStatus"></span></div>
         <div class="tabs" id="discTabs" role="tablist" aria-label="원판 선택"></div>
         <div class="row expert" id="divRow">
@@ -182,7 +182,16 @@
           </div>
         </div>
 
-        <div class="stage" id="stage"><canvas id="disc" aria-label="선택한 원판. 빈 칸을 누르면 코인 상자에서 고른 코인이 놓이고, 놓인 코인을 누르면 빠집니다."></canvas></div>
+        <div class="row zoom-row">
+          <span class="label" id="lblZoom">원판 확대</span>
+          <div class="seg" id="segZoom" role="group" aria-labelledby="lblZoom">
+            <button type="button" data-z="1" aria-pressed="true">1배</button>
+            <button type="button" data-z="1.5" aria-pressed="false">1.5배</button>
+            <button type="button" data-z="2" aria-pressed="false">2배</button>
+          </div>
+          <span class="status zoom-tip">확대하면 원판을 밀어서 움직일 수 있어요</span>
+        </div>
+        <div class="stage-scroll" id="stageScroll"><div class="stage" id="stage"><canvas id="disc" aria-label="선택한 원판. 빈 칸을 누르면 코인 상자에서 고른 코인이 놓이고, 놓인 코인을 누르면 빠집니다."></canvas></div></div>
         <div class="row">
           <button id="dice" type="button">🎲 랜덤</button>
           <button id="copyPrev" type="button">앞 원판 복사</button>
@@ -193,6 +202,11 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="mbar" id="mbar" hidden>
+  <button type="button" id="mPlay" class="primary">▶ 재생</button>
+  <span class="status num" id="mPos"></span>
 </div>
 
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">

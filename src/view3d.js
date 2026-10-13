@@ -28,7 +28,11 @@ export function createView3D(el, opts){
   new ResizeObserver(() => {
     const w = el.clientWidth, h = el.clientHeight;
     if (!w || !h) return;
+    const first = !camera.userData.sized;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    camera.userData.sized = true;
+    computeFit();
+    if (first) resetView();
   }).observe(el);
 
   // 드래그가 아닌 클릭이면 원판 선택
@@ -105,10 +109,21 @@ export function createView3D(el, opts){
     selRing.rotation.x = Math.PI / 2; group.add(selRing);
     scene.add(group);
 
-    const H = (L - 1) * Y_GAP, W = T * X_GAP;
-    const dist = Math.max(W * 1.25, H * 1.7, 6.5);
-    fit = { pos: new THREE.Vector3(0, H / 2 + dist * 0.62, dist), target: new THREE.Vector3(0, H / 2 - 0.2, 0) };
+    lastSize = { H: (L - 1) * Y_GAP, W: T * X_GAP };
+    computeFit();
     if (refit) resetView();
+  }
+
+  // 화면 비율까지 고려해서 탑 전체가 들어오는 카메라 거리
+  let lastSize = { H: 0, W: X_GAP };
+  function computeFit(){
+    const { H, W } = lastSize;
+    const vf = camera.fov * Math.PI / 180;
+    const hf = 2 * Math.atan(Math.tan(vf / 2) * (camera.aspect || 1));
+    const needW = (W / 2 + 1.4) / Math.tan(hf / 2);
+    const needH = (H / 2 + 1.6) / Math.tan(vf / 2);
+    const dist = Math.max(needW, needH, 6) * 0.95;
+    fit = { pos: new THREE.Vector3(0, H / 2 + dist * 0.55, dist * 0.84), target: new THREE.Vector3(0, H / 2 - 0.2, 0) };
   }
 
   // s: { rot(t,d) → 회전각 또는 null, playing, sel:{t,d} }

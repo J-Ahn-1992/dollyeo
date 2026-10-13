@@ -158,7 +158,13 @@ document.querySelectorAll('#gate [data-mode]').forEach(b => b.addEventListener('
 const playBtn = $('play');
 playBtn.addEventListener('click', () => { player.toggle(); renderPlay(); });
 $('rewind').addEventListener('click', () => { player.seek(0); S.orderSel = 0; renderArrange(); });
-function renderPlay(){ playBtn.textContent = player.playing ? '■ 정지' : '▶ 재생'; }
+function renderPlay(){
+  const t = player.playing ? '■ 정지' : '▶ 재생';
+  playBtn.textContent = t; $('mPlay').textContent = t;
+}
+$('mPlay').addEventListener('click', () => { player.toggle(); renderPlay(); });
+// 재생 버튼이 화면 밖으로 나가면 아래 고정 막대를 보여줌 (휴대폰 화면에서만 CSS로 보임)
+new IntersectionObserver(es => { $('mbar').hidden = es[0].isIntersecting; }).observe($('pTransport'));
 $('tempo').addEventListener('input', e => {
   const v = +e.target.value;
   S.song.bpm = v; player.setBpm(v);
@@ -478,6 +484,23 @@ function resize2d(){
   canvas.width = Math.round(CW * dpr); canvas.height = Math.round(CW * dpr);
 }
 new ResizeObserver(resize2d).observe(stage);
+
+// 원판 확대 (휴대폰에서 칸이 작을 때)
+const stageScroll = $('stageScroll');
+function setZoom(z, save = true){
+  stage.style.setProperty('--zoom', z);
+  stageScroll.classList.toggle('zoomed', z > 1);
+  $('pDisc').classList.toggle('zoomed', z > 1);
+  $('segZoom').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.z === z));
+  requestAnimationFrame(() => {
+    // 바늘이 있는 맨 위 가운데가 보이게
+    stageScroll.scrollLeft = (stageScroll.scrollWidth - stageScroll.clientWidth) / 2;
+    stageScroll.scrollTop = 0;
+  });
+  if (save) ls.set('coin-disc-zoom', String(z));
+}
+$('segZoom').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setZoom(+b.dataset.z); });
+setZoom([1, 1.5, 2].includes(+ls.get('coin-disc-zoom')) ? +ls.get('coin-disc-zoom') : 1, false);
 resize2d();
 
 canvas.addEventListener('pointerdown', e => {
@@ -568,7 +591,7 @@ function frame(ts){
   if (key !== lastBarKey){
     lastBarKey = key;
     const sec = secById(bar.sid), single = S.song.sections.length === 1 && S.song.order.length === 1;
-    $('posText').textContent = single
+    $('posText').textContent = $('mPos').textContent = single
       ? '마디 ' + (loc.i + 1) + ' / ' + tl.bars.length
       : '구간 ' + bar.sid + ' · ' + (bar.b + 1) + '/' + M.sectionBars(sec) + '마디 · 전체 ' + (loc.i + 1) + '/' + tl.bars.length;
     orderStrip.querySelectorAll('.blk').forEach(b => b.classList.toggle('playing', player.playing && +b.dataset.i === bar.oi));
