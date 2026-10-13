@@ -58,15 +58,17 @@ export function initPerf(app){
   function runBuild(){
     cancelBuild();
     const { sid, sec, steps } = buildSteps();
-    const total = Math.max(4, Math.min(12, steps.length * 0.16));
-    build = { sid, sec, steps, idx: 0, t0: performance.now() / 1000 + 0.6, gap: steps.length ? total / steps.length : 0, shown: new Map(), cur: {}, end: null, resolve: null };
+    // 쌓는 장면은 2.5~5초. 처음엔 천천히, 갈수록 빠르게 놓아서 끝에 몰아치는 느낌
+    const total = Math.max(2.5, Math.min(5, steps.length * 0.07));
+    const times = steps.map((_, i) => total * Math.pow(i / steps.length, 0.6));
+    build = { sid, sec, steps, idx: 0, t0: performance.now() / 1000 + 0.3, times, shown: new Map(), cur: {}, end: null, resolve: null };
     renderPlay();
     return new Promise(res => build.resolve = res);
   }
   function cancelBuild(){ if (build){ const r = build.resolve; build = null; if (r) r(false); } }
   function buildTick(now){
     const b = build, el = performance.now() / 1000 - b.t0;
-    while (b.idx < b.steps.length && el >= b.idx * b.gap){
+    while (b.idx < b.steps.length && el >= b.times[b.idx]){
       const st = b.steps[b.idx++];
       b.cur[st.t] = st.d;
       b.shown.set(st.t + '|' + st.d + '|' + st.r + '|' + st.s, performance.now());
@@ -77,7 +79,7 @@ export function initPerf(app){
     }
     if (b.idx >= b.steps.length){
       if (b.end == null) b.end = el;
-      if (el - b.end > 0.9){ const r = b.resolve; build = null; r(true); renderPlay(); }
+      if (el - b.end > 0.6){ const r = b.resolve; build = null; r(true); renderPlay(); }
     }
   }
   $('perfOpen').addEventListener('click', show);
