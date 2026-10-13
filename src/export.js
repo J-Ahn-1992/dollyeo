@@ -50,11 +50,15 @@ export function initExport(app){
 
   const recMime = (() => {
     if (!window.MediaRecorder) return null;
-    for (const [m, e] of [['audio/webm;codecs=opus', 'webm'], ['audio/webm', 'webm'], ['audio/mp4', 'mp4']]){
+    // MP4(AAC)가 가장 많은 기기에서 재생됨. 녹음을 못 하는 브라우저에서만 WebM으로 대신 저장
+    for (const [m, e] of [['audio/mp4;codecs=mp4a.40.2', 'mp4'], ['audio/mp4', 'mp4'], ['audio/webm;codecs=opus', 'webm'], ['audio/webm', 'webm']]){
       try { if (MediaRecorder.isTypeSupported(m)) return { m, ext: e }; } catch (err){}
     }
     return null;
   })();
+  if (recMime && recMime.ext === 'webm'){
+    note.textContent = '이 브라우저는 MP4로 녹음할 수 없어서 WebM 파일로 만들어져요. 아이폰 등에서 안 열리면 최신 Chrome이나 Safari에서 다시 만들어 주세요.';
+  }
   if (!recMime){
     makeBtn.disabled = true;
     note.textContent = '이 브라우저는 오디오 파일 만들기를 지원하지 않아요. 최신 Chrome이나 Safari에서 열어 주세요.';
