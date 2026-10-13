@@ -7,6 +7,7 @@ import { createView3D } from './view3d.js';
 import { randomGrid } from './random.js';
 import { initSongs } from './songs.js';
 import { initExport } from './export.js';
+import { initGuide } from './guide.js';
 import { $, ls, readTokens, confirmTwice, fmtTime } from './util.js';
 
 const TOK = ['bg', 'fg', 'muted', 'disc', 'disc-line', 'slot', 'hub', 'hub-fg', 'needle', 'accent', 'shelf', 'glow', 'note', 'chord'];
@@ -133,7 +134,14 @@ function setMode(m){
   $('gate').hidden = true;
   renderAll();
 }
-document.querySelectorAll('#modeSwitch button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+const guide = initGuide();
+$('helpBtn').addEventListener('click', () => guide.start(mode || 'beginner'));
+document.querySelectorAll('#modeSwitch button').forEach(b => b.addEventListener('click', () => {
+  const m = b.dataset.mode;
+  setMode(m);
+  // 숙련자 모드를 처음 켜면 숙련자 안내를 보여줌
+  if (m === 'expert' && !guide.done('expert')) setTimeout(() => guide.start('expert'), 250);
+}));
 document.querySelectorAll('#gate [data-mode]').forEach(b => b.addEventListener('click', () => {
   const m = b.dataset.mode;
   if (S.isDemo && !S.dirty){
@@ -143,6 +151,7 @@ document.querySelectorAll('#gate [data-mode]').forEach(b => b.addEventListener('
     fixSel();
   }
   setMode(m);
+  setTimeout(() => guide.start(m), 300);
 }));
 
 // ---------- 재생 조작 ----------
@@ -585,6 +594,7 @@ $('tempo').value = S.song.bpm;
 view.rebuild(true);
 renderAll();
 if (!mode) $('gate').hidden = false;
+else if (!guide.done(mode)) setTimeout(() => guide.start(mode), 700);
 if (document.fonts) document.fonts.ready.then(() => { view.rebuild(false); });
 requestAnimationFrame(frame);
 

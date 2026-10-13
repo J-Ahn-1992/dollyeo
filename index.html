@@ -10,9 +10,12 @@
       <h1>코인 원판 작곡기</h1>
       <p class="lead" id="lead"></p>
     </div>
+    <div class="top-tools">
+    <button type="button" id="helpBtn">안내 보기</button>
     <div class="seg mode-switch" id="modeSwitch" role="group" aria-label="모드">
       <button type="button" data-mode="beginner" aria-pressed="true">초보자</button>
       <button type="button" data-mode="expert" aria-pressed="false">숙련자</button>
+    </div>
     </div>
   </header>
 
@@ -33,12 +36,13 @@
           <label class="label" for="tempo">빠르기</label>
           <input id="tempo" type="range" min="60" max="160" step="1" value="96">
           <span class="num" id="bpm">96 BPM</span>
+          <button type="button" class="help" data-help="play" aria-label="재생 설명" aria-expanded="false">?</button>
         </div>
       </div>
 
       <div class="panel" id="arrangePanel">
         <div class="row">
-          <span class="label">곡 구성</span>
+          <span class="label">곡 구성</span><button type="button" class="help" data-help="arrange" aria-label="곡 구성 설명" aria-expanded="false">?</button>
           <span class="status num" id="arrTotal"></span>
           <span class="spacer"></span>
           <label class="check"><input type="checkbox" id="follow"> 재생 따라가기</label>
@@ -58,6 +62,7 @@
             <button type="button" data-v="3/4" aria-pressed="false">3/4</button>
             <button type="button" data-v="6/8" aria-pressed="false">6/8</button>
           </div>
+          <button type="button" class="help" data-help="meter" aria-label="박자 설명" aria-expanded="false">?</button>
         </div>
         <p class="hint" id="arrMsg" aria-live="polite"></p>
         <span class="sublabel">연주 순서 · 왼쪽부터 차례로 연주해요</span>
@@ -71,12 +76,12 @@
       </div>
 
       <div class="panel">
-        <div class="row"><span class="label">전체 구조</span><span class="status">아래부터 1번 원판</span><span class="spacer"></span><button id="resetView" type="button">전체 보기</button></div>
+        <div class="row"><span class="label">전체 구조</span><button type="button" class="help" data-help="view3d" aria-label="전체 구조 설명" aria-expanded="false">?</button><span class="status">아래부터 1번 원판</span><span class="spacer"></span><button id="resetView" type="button">전체 보기</button></div>
         <div class="view3d" id="view3d"><span class="tip">드래그: 돌리기 · 두 손가락(오른쪽 버튼) 드래그: 이동 · 원판을 누르면 편집</span></div>
       </div>
 
       <div class="panel">
-        <div class="row"><span class="label">내 곡</span><span class="spacer"></span><span class="save-state" id="saveState" aria-live="polite"></span></div>
+        <div class="row"><span class="label">내 곡</span><button type="button" class="help" data-help="songs" aria-label="내 곡 설명" aria-expanded="false">?</button><span class="spacer"></span><span class="save-state" id="saveState" aria-live="polite"></span></div>
         <div class="row">
           <input id="songName" class="name-in" type="text" maxlength="40" aria-label="곡 이름" autocomplete="off">
           <button id="saveSong" class="primary" type="button">저장</button>
@@ -88,7 +93,7 @@
       </div>
 
       <div class="panel">
-        <span class="label">내보내기 · 공유</span>
+        <div class="row"><span class="label">내보내기 · 공유</span><button type="button" class="help" data-help="export" aria-label="내보내기 설명" aria-expanded="false">?</button></div>
         <div class="row">
           <label class="label" for="loops">반복</label>
           <select id="loops"><option value="1">1번</option><option value="2" selected>2번</option><option value="4">4번</option></select>
@@ -108,7 +113,7 @@
 
     <div class="right">
       <div class="panel">
-        <div class="row"><span class="label">악기</span><span class="spacer"></span><button id="addTrack" type="button">+ 악기 추가</button></div>
+        <div class="row"><span class="label">악기</span><button type="button" class="help" data-help="tracks" aria-label="악기 설명" aria-expanded="false">?</button><span class="spacer"></span><button id="addTrack" type="button">+ 악기 추가</button></div>
         <div class="tabs" id="trackTabs" role="tablist" aria-label="악기 선택"></div>
         <div class="row">
           <label class="label" for="inst">종류</label>
@@ -132,11 +137,12 @@
             <button type="button" data-v="5" aria-pressed="true">5음 쉬움</button>
             <button type="button" data-v="7" aria-pressed="false">7음 전체</button>
           </div>
+          <button type="button" class="help" data-help="scale" aria-label="음계 설명" aria-expanded="false">?</button>
         </div>
       </div>
 
       <div class="panel">
-        <div class="row"><span class="label">원판</span><span class="status" id="discSection"></span><span class="spacer"></span><span class="status" id="discStatus"></span></div>
+        <div class="row"><span class="label">원판</span><button type="button" class="help" data-help="disc" aria-label="원판 설명" aria-expanded="false">?</button><span class="status" id="discSection"></span><span class="spacer"></span><span class="status" id="discStatus"></span></div>
         <div class="tabs" id="discTabs" role="tablist" aria-label="원판 선택"></div>
         <div class="row expert" id="divRow">
           <span class="label" id="lblDiv">박 쪼개기</span>
@@ -145,8 +151,10 @@
             <button type="button" data-v="t" aria-pressed="false">셋잇단</button>
           </div>
           <span class="status" id="divInfo"></span>
+          <button type="button" class="help" data-help="div" aria-label="박 쪼개기 설명" aria-expanded="false">?</button>
         </div>
 
+        <div class="row coinhead"><span class="label">코인 상자</span><button type="button" class="help" data-help="coin" aria-label="코인 상자 설명" aria-expanded="false">?</button></div>
         <div class="coinbox" aria-label="코인 상자">
           <span class="label" id="lblType">종류</span>
           <div class="seg" role="group" aria-labelledby="lblType" id="segType">

@@ -3,7 +3,7 @@
   --bg:#ECEEF2; --fg:#1A2030; --muted:#5A6377; --panel:#FFFFFF; --border:#D3D8E2;
   --disc:#1D2433; --disc-line:#38425A; --slot:#4A5570; --hub:#F4F5F8; --hub-fg:#1D2433;
   --needle:#1A2030; --accent:#24345F; --accent-fg:#FFFFFF; --shelf:#C9CFDB; --glow:#FFD25A;
-  --note:#2EC4B6; --chord:#B06EF0; --warn:#C2410C; --scrim:rgba(236,238,242,.86);
+  --note:#2EC4B6; --chord:#B06EF0; --warn:#C2410C; --scrim:rgba(236,238,242,.86); --tour-scrim:rgba(20,24,36,.45);
   --display:"Do Hyeon","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
@@ -11,12 +11,12 @@
   --bg:#10131A; --fg:#E6E9F0; --muted:#8B94A8; --panel:#181D28; --border:#2A3141;
   --disc:#1B2130; --disc-line:#323B50; --slot:#465170; --hub:#2A3246; --hub-fg:#E6E9F0;
   --needle:#E6E9F0; --accent:#A9BCF5; --accent-fg:#10131A; --shelf:#262D3C; --glow:#FFD25A;
-  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); color-scheme:dark}}
+  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); --tour-scrim:rgba(0,0,0,.6); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10131A; --fg:#E6E9F0; --muted:#8B94A8; --panel:#181D28; --border:#2A3141;
   --disc:#1B2130; --disc-line:#323B50; --slot:#465170; --hub:#2A3246; --hub-fg:#E6E9F0;
   --needle:#E6E9F0; --accent:#A9BCF5; --accent-fg:#10131A; --shelf:#262D3C; --glow:#FFD25A;
-  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); color-scheme:dark}
+  --note:#3FD6C8; --chord:#C08BF5; --warn:#FB923C; --scrim:rgba(16,19,26,.86); --tour-scrim:rgba(0,0,0,.6); color-scheme:dark}
 
 [hidden]{display:none !important}
 html,body{height:100%}
@@ -50,6 +50,23 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .seg button{border:0;border-radius:0;background:transparent;display:inline-flex;align-items:center;gap:6px}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .mode-switch button{min-width:76px;justify-content:center}
+.top-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.coinhead{margin-bottom:-4px}
+.help{min-height:0;width:24px;height:24px;padding:0;border-radius:50%;font-size:.78rem;font-weight:700;color:var(--muted);background:transparent;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.help[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.help-pop{position:absolute;z-index:30;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.18);box-sizing:border-box}
+.help-title{font-weight:700;margin-bottom:4px}
+.help-body{margin:0;font-size:.88rem;color:var(--muted);line-height:1.55}
+/* 튜토리얼 */
+.tour-hole{position:fixed;z-index:40;border-radius:12px;box-shadow:0 0 0 9999px var(--tour-scrim),0 0 0 3px var(--glow);pointer-events:none;transition:top .2s,left .2s,width .2s,height .2s}
+.tour-card{position:fixed;z-index:41;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:6px;box-sizing:border-box}
+.tour-top{display:flex;align-items:center;justify-content:space-between}
+.tour-step{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600}
+.tour-x{min-height:0;width:30px;height:30px;padding:0;border:0;background:transparent;color:var(--muted)}
+.tour-title{font-family:var(--display);font-size:1.35rem}
+.tour-body{margin:0;font-size:.9rem;line-height:1.6;color:var(--fg)}
+.tour-nav{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+@media (prefers-reduced-motion: reduce){.tour-hole{transition:none}}
 .check{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);cursor:pointer}
 .check input{width:16px;height:16px;accent-color:var(--accent)}
 .text-in,.name-in{flex:1 1 160px;min-width:0;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:6px 12px;min-height:40px;font-family:var(--body);font-size:.92rem}
