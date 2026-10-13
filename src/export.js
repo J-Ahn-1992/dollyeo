@@ -4,6 +4,7 @@
 // 독립 사이트에서는 계산된 소리를 바로 MP3·WAV로 바꿔서 기다림 없이 받음
 import { $, confirmTwice } from './util.js';
 import { encodeSong, decodeSong } from './model.js';
+import { T } from './i18n.js';
 
 const CODE_PREFIX = 'CDISC2:';
 const SITE = !!window.STANDALONE;
@@ -24,7 +25,7 @@ async function pipeBytes(bytes, stream){
 export function initExport(app){
   const { S, player } = app;
   const codeStatus = $('codeStatus'), codeIn = $('codeIn');
-  const payload = () => JSON.stringify({ n: S.songName.trim() || '이름 없는 곡', s: encodeSong(S.song) });
+  const payload = () => JSON.stringify({ n: S.songName.trim() || T('이름 없는 곡'), s: encodeSong(S.song) });
 
   function openShared(got, msg){
     app.applySong(got.song);
@@ -39,22 +40,22 @@ export function initExport(app){
     const raw = code.trim().replace(/\s+/g, '');
     if (!raw.startsWith(CODE_PREFIX)) throw new Error('prefix');
     const o = JSON.parse(new TextDecoder().decode(fromB64(raw.slice(CODE_PREFIX.length))));
-    return { name: String(o.n || '받은 곡').slice(0, 40), song: decodeSong(o.s) };
+    return { name: String(o.n || T('받은 곡')).slice(0, 40), song: decodeSong(o.s) };
   }
 
   function copyText(text, okMsg){
-    const fallback = () => { codeIn.value = text; codeIn.focus(); codeIn.select(); codeStatus.textContent = '아래 칸의 내용을 직접 복사해 주세요.'; };
+    const fallback = () => { codeIn.value = text; codeIn.focus(); codeIn.select(); codeStatus.textContent = T('아래 칸의 내용을 직접 복사해 주세요.'); };
     try { navigator.clipboard.writeText(text).then(() => { codeStatus.textContent = okMsg; }, fallback); }
     catch (e){ fallback(); }
   }
 
-  $('copyCode').addEventListener('click', () => copyText(makeCode(), '복사했어요. 메신저에 붙여넣어 보내세요.'));
+  $('copyCode').addEventListener('click', () => copyText(makeCode(), T('복사했어요. 메신저에 붙여넣어 보내세요.')));
   $('loadCode').addEventListener('click', e => {
     let got;
     try { got = readCode(codeIn.value); }
-    catch (err){ codeStatus.textContent = '코드를 읽지 못했어요. "CDISC2:"로 시작하는 코드 전체를 붙여넣었는지 확인해 주세요.'; return; }
-    if (S.dirty && !confirmTwice('code', e.currentTarget, '변경 버리고 불러오기')) return;
-    openShared(got, '불러왔어요. 마음에 들면 저장을 눌러 내 곡에 넣으세요.');
+    catch (err){ codeStatus.textContent = T('코드를 읽지 못했어요. "CDISC2:"로 시작하는 코드 전체를 붙여넣었는지 확인해 주세요.'); return; }
+    if (S.dirty && !confirmTwice('code', e.currentTarget, T('변경 버리고 불러오기'))) return;
+    openShared(got, T('불러왔어요. 마음에 들면 저장을 눌러 내 곡에 넣으세요.'));
     codeIn.value = '';
   });
 
@@ -73,23 +74,23 @@ export function initExport(app){
     let bytes = fromB64(unurl(v.slice(1)));
     if (tag === 'z') bytes = await pipeBytes(bytes, new DecompressionStream('deflate-raw'));
     const o = JSON.parse(new TextDecoder().decode(bytes));
-    return { name: String(o.n || '받은 곡').slice(0, 40), song: decodeSong(o.s) };
+    return { name: String(o.n || T('받은 곡')).slice(0, 40), song: decodeSong(o.s) };
   }
   if (SITE){
     $('copyLink').addEventListener('click', async () => {
-      try { copyText(await makeLink(), '링크를 복사했어요. 받은 사람은 링크만 누르면 이 곡이 열려요.'); }
-      catch (e){ codeStatus.textContent = '링크를 만들지 못했어요. 곡 코드 복사를 대신 써 주세요.'; }
+      try { copyText(await makeLink(), T('링크를 복사했어요. 받은 사람은 링크만 누르면 이 곡이 열려요.')); }
+      catch (e){ codeStatus.textContent = T('링크를 만들지 못했어요. 곡 코드 복사를 대신 써 주세요.'); }
     });
   }
   async function openFromLink(){
     if (!location.hash.startsWith('#song=')) return false;
     try {
       const got = await readLink(location.hash);
-      openShared(got, '공유받은 곡을 열었어요: ' + got.name + '. 마음에 들면 저장을 눌러 내 곡에 넣으세요.');
+      openShared(got, T('공유받은 곡을 열었어요: {name}. 마음에 들면 저장을 눌러 내 곡에 넣으세요.', { name: got.name }));
       history.replaceState(null, '', location.pathname + location.search);
       return true;
     } catch (e){
-      codeStatus.textContent = '공유 링크를 읽지 못했어요. 링크가 끝까지 복사됐는지 확인해 주세요.';
+      codeStatus.textContent = T('공유 링크를 읽지 못했어요. 링크가 끝까지 복사됐는지 확인해 주세요.');
       return false;
     }
   }
@@ -98,11 +99,11 @@ export function initExport(app){
   const makeBtn = $('makeAudio'), saveBtn = $('saveAudio'), row = $('audioProgressRow');
   const prog = $('audioProgress'), status = $('audioStatus'), note = $('audioNote');
   let downloads = null, blob = null, ext = 'mp4', busy = false, fmt = 'mp3';
-  const fileBase = () => (S.songName.trim() || '내 곡').replace(/[\\/:*?"<>|]/g, '');
+  const fileBase = () => (S.songName.trim() || T('내 곡')).replace(/[\\/:*?"<>|]/g, '');
 
   if (SITE){
-    makeBtn.textContent = '🎧 음악 파일 받기';
-    note.textContent = 'MP3는 어디서나 재생되는 작은 파일이고, WAV는 음질 손실이 없는 큰 파일이에요. 누르면 바로 만들어져요.';
+    makeBtn.textContent = T('🎧 음악 파일 받기');
+    note.textContent = T('MP3는 어디서나 재생되는 작은 파일이고, WAV는 음질 손실이 없는 큰 파일이에요. 누르면 바로 만들어져요.');
     $('segFmt').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       fmt = b.dataset.v;
@@ -119,11 +120,11 @@ export function initExport(app){
     return null;
   })();
   if (!SITE && recMime && recMime.ext === 'webm'){
-    note.textContent = '이 브라우저는 MP4로 녹음할 수 없어서 WebM 파일로 만들어져요. 아이폰 등에서 안 열리면 최신 Chrome이나 Safari에서 다시 만들어 주세요.';
+    note.textContent = T('이 브라우저는 MP4로 녹음할 수 없어서 WebM 파일로 만들어져요. 아이폰 등에서 안 열리면 최신 Chrome이나 Safari에서 다시 만들어 주세요.');
   }
   if (!SITE && !recMime){
     makeBtn.disabled = true;
-    note.textContent = '이 브라우저는 오디오 파일 만들기를 지원하지 않아요. 최신 Chrome이나 Safari에서 열어 주세요.';
+    note.textContent = T('이 브라우저는 오디오 파일 만들기를 지원하지 않아요. 최신 Chrome이나 Safari에서 열어 주세요.');
   }
 
   function wavBlob(buf){
@@ -169,21 +170,21 @@ export function initExport(app){
   }
 
   async function makeSiteFile(){
-    row.hidden = false; prog.value = 0; status.textContent = '만드는 중…';
+    row.hidden = false; prog.value = 0; status.textContent = T('만드는 중…');
     if (player.playing) player.stop();
     player.ensure();
     const buf = await player.renderOffline(+$('loops').value);
     const b = fmt === 'wav' ? wavBlob(buf) : await mp3Blob(buf);
     prog.value = 1;
     download(b, fileBase() + '.' + fmt);
-    status.textContent = '파일을 받았어요. 다운로드 폴더를 확인해 주세요.';
+    status.textContent = T('파일을 받았어요. 다운로드 폴더를 확인해 주세요.');
   }
 
   async function recordMp4(){
     const ac = player.ensure();
     if (player.playing) player.stop();
     saveBtn.hidden = true; blob = null;
-    row.hidden = false; prog.value = 0; status.textContent = '준비 중…';
+    row.hidden = false; prog.value = 0; status.textContent = T('준비 중…');
     const buf = await player.renderOffline(+$('loops').value);
     const dest = ac.createMediaStreamDestination();
     const src = ac.createBufferSource(); src.buffer = buf; src.connect(dest);
@@ -197,15 +198,15 @@ export function initExport(app){
     const tick = setInterval(() => {
       const el = Math.max(0, ac.currentTime - t0);
       prog.value = Math.min(1, el / buf.duration);
-      status.textContent = Math.floor(el) + '초 / ' + Math.ceil(buf.duration) + '초 녹음 중';
+      status.textContent = T('{a}초 / {b}초 녹음 중', { a: Math.floor(el), b: Math.ceil(buf.duration) });
     }, 200);
     await new Promise(res => src.onended = res);
     clearInterval(tick);
     rec.stop(); await done;
     blob = new Blob(chunks, { type: recMime.m }); ext = recMime.ext;
     prog.value = 1;
-    if (downloads){ status.textContent = '완성! 파일 저장하기를 눌러 주세요.'; saveBtn.hidden = false; }
-    else status.textContent = '완성했지만 이 화면에서는 파일 저장을 쓸 수 없어요.';
+    if (downloads){ status.textContent = T('완성! 파일 저장하기를 눌러 주세요.'); saveBtn.hidden = false; }
+    else status.textContent = T('완성했지만 이 화면에서는 파일 저장을 쓸 수 없어요.');
   }
 
   makeBtn.addEventListener('click', async () => {
@@ -214,8 +215,8 @@ export function initExport(app){
     try { await (SITE ? makeSiteFile() : recordMp4()); }
     catch (e){
       status.textContent = SITE && fmt === 'mp3' && !window.lamejs
-        ? 'MP3 변환 도구를 불러오지 못했어요. 인터넷 연결을 확인하거나 WAV로 받아 주세요.'
-        : '오디오 파일을 만들지 못했어요. 다시 시도해 주세요.';
+        ? T('MP3 변환 도구를 불러오지 못했어요. 인터넷 연결을 확인하거나 WAV로 받아 주세요.')
+        : T('오디오 파일을 만들지 못했어요. 다시 시도해 주세요.');
     } finally { busy = false; makeBtn.disabled = !SITE && !recMime; }
   });
 
@@ -223,11 +224,11 @@ export function initExport(app){
     if (!blob || !downloads) return;
     try {
       await downloads.save({ filename: fileBase() + '.' + ext, data: blob });
-      status.textContent = '저장했어요.';
+      status.textContent = T('저장했어요.');
     } catch (e){
-      status.textContent = e && e.code === 'declined' ? '저장을 취소했어요. 다시 누르면 저장할 수 있어요.'
-        : e && e.code === 'rate_limited' ? '잠시 후 다시 눌러 주세요.'
-        : '이 화면에서는 파일을 저장할 수 없어요.';
+      status.textContent = e && e.code === 'declined' ? T('저장을 취소했어요. 다시 누르면 저장할 수 있어요.')
+        : e && e.code === 'rate_limited' ? T('잠시 후 다시 눌러 주세요.')
+        : T('이 화면에서는 파일을 저장할 수 없어요.');
     }
   });
 

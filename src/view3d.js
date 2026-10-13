@@ -1,13 +1,16 @@
 // 3D 전체 구조: 악기마다 원판 탑 하나, 아래부터 1번 원판
 // THREE, THREE.OrbitControls는 index.html에서 미리 불러온 전역값
 
+import { T } from './i18n.js';
+
 const X_GAP = 2.7, Y_GAP = 0.6;
 
 // opts: { towers(): [{label, count, mute}], paint(canvas, t, d), onSelect(t, d), tok() }
 export function createView3D(el, opts){
   const THREE = window.THREE;
   if (!THREE || !THREE.OrbitControls){
-    el.innerHTML = '<div class="fallback">3D 화면을 불러오지 못했어요. 악기와 원판 버튼으로 편집은 그대로 할 수 있어요.</div>';
+    el.innerHTML = '<div class="fallback"></div>';
+    el.firstChild.textContent = T('3D 화면을 불러오지 못했어요. 악기와 원판 버튼으로 편집은 그대로 할 수 있어요.');
     return { rebuild(){}, update(){}, refresh(){}, resetView(){} };
   }
 

@@ -15,10 +15,10 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="동전 같은 코인을 원판에 올리면 음악이 되는 초보자용 작곡 앱">
+<meta name="description" content="동전 같은 코인을 원판에 올리면 음악이 되는 초보자용 작곡 앱 · Drop coins on spinning discs and they become music">
 <meta name="theme-color" content="#24345F">
-<meta property="og:title" content="돌려돌려 작곡판">
-<meta property="og:description" content="동전 같은 코인을 원판에 올리면 음악이 되는 초보자용 작곡 앱">
+<meta property="og:title" content="돌려돌려 작곡판 · Spin Spin Studio">
+<meta property="og:description" content="동전 같은 코인을 원판에 올리면 음악이 되는 초보자용 작곡 앱 · Drop coins on spinning discs and they become music">
 <meta property="og:image" content="icons/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
 ${headPart}

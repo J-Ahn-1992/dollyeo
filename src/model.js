@@ -10,7 +10,8 @@
 // grid[고리][칸] = 코인 | null
 // 코인 = { t:'n'(한 음)|'c'(화음), l:길이(칸), v:세기 0~2, a:반음 -1|0|1 }
 
-import { INST, DRUMS, SCALE, DIATONIC, PC_NAME, TENSE, METERS, COUNTS, MAX_TRACKS, MAX_ORDER } from './constants.js';
+import { T } from './i18n.js';
+import { INST, DRUMS, DRUM_SHORT, SCALE, DIATONIC, PC_NAME, TENSE, METERS, COUNTS, MAX_TRACKS, MAX_ORDER } from './constants.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -33,7 +34,7 @@ export function ringCount(inst, scale){
 }
 
 export function ringInfo(inst, scale, mood){
-  if (inst === 'drum') return DRUMS.map(n => ({ label: n, short: n.replace('닫힌 ', '').replace('열린 하이햇', '열린햇'), high: false, tense: false }));
+  if (inst === 'drum') return DRUMS.map((n, i) => ({ label: n, short: DRUM_SHORT[i], high: false, tense: false }));
   const sc = scale === 7 ? 7 : 5, off = SCALE[sc][mood === 'dark' ? 'dark' : 'bright'];
   return Array.from({ length: ringCount(inst, sc) }, (_, i) => {
     const midi = INST[inst].base + off[i % sc] + 12 * Math.floor(i / sc);
@@ -372,7 +373,7 @@ function gf(rings, hits, slots = 16){
 
 export function demoSong(withChorus){
   const verse = {
-    id: 'A', label: withChorus ? '벌스' : '', meter: '4/4', parts: [
+    id: 'A', label: withChorus ? T('벌스') : '', meter: '4/4', parts: [
       { count: 1, discs: [gf(5, [[0,0,'n',1,2],[8,0,'n',1,2],[10,0],[4,1],[12,1,'n',1,2],[0,3],[2,3,'n',1,0],[4,3],[6,3,'n',1,0],[8,3],[10,3,'n',1,0],[12,3],[14,4]])] },
       { count: 2, discs: [gf(5, [[0,0,'n',4],[8,3,'n',4]]), gf(5, [[0,4,'n',4],[8,2,'n',2],[12,3,'n',4]])] },
       { count: 4, discs: [
@@ -386,7 +387,7 @@ export function demoSong(withChorus){
   const tracks = [{ inst: 'drum', scale: 5, mute: false }, { inst: 'bass', scale: 5, mute: false }, { inst: 'piano', scale: 5, mute: false }];
   if (!withChorus) return normalizeSong({ mood: 'bright', bpm: 96, tracks, sections: [verse], order: ['A'] });
   const chorus = {
-    id: 'B', label: '후렴', meter: '4/4', parts: [
+    id: 'B', label: T('후렴'), meter: '4/4', parts: [
       { count: 1, discs: [gf(5, [[0,0,'n',1,2],[6,0],[8,0,'n',1,2],[4,1,'n',1,2],[12,1,'n',1,2],[12,2],[0,3],[4,3],[8,3],[12,3],[2,4],[6,4,'n',1,0],[10,4],[14,4,'n',1,0]])] },
       { count: 2, discs: [gf(5, [[0,3,'n',2],[2,3,'n',1,0],[4,3,'n',2],[8,4,'n',2],[10,4,'n',1,0],[12,4,'n',2]]), gf(5, [[0,2,'n',2],[4,2,'n',2],[8,0,'n',4],[12,3,'n',4]])] },
       { count: 2, discs: [

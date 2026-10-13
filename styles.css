@@ -52,6 +52,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .mode-switch button{min-width:76px;justify-content:center}
 .top-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lang-switch button{min-width:0;padding:8px 10px;font-size:.85rem}
 .coinhead{margin-bottom:-4px}
 .help{min-height:0;width:24px;height:24px;padding:0;border-radius:50%;font-size:.78rem;font-weight:700;color:var(--muted);background:transparent;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .help[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}

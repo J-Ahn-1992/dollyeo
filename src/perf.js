@@ -3,6 +3,7 @@ import { INST } from './constants.js';
 import * as M from './model.js';
 import { drawDisc, geom } from './draw.js';
 import { $ } from './util.js';
+import { T } from './i18n.js';
 
 const W = 1080, H = 1920;
 // 공연 화면은 앱 테마와 상관없이 항상 어두운 무대
@@ -34,7 +35,7 @@ export function initPerf(app){
     open = false; root.hidden = true; document.body.classList.remove('perf-open');
     particles = []; queue = []; cancelBuild();
   }
-  function renderPlay(){ playBtn.textContent = (player.playing || build) ? '■ 정지' : '▶ 재생'; }
+  function renderPlay(){ playBtn.textContent = (player.playing || build) ? T('■ 정지') : T('▶ 재생'); }
 
   // ---------- 만드는 과정 다시보기 ----------
   // 첫 구간을 빈 원판에서 시작해 드럼 → 베이스 → 나머지 악기 순서로 코인을 하나씩 놓고, 다 놓으면 곡을 연주
@@ -187,13 +188,13 @@ export function initPerf(app){
     // 곡 이름
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFFFFF';
-    const name = (S.songName || '').trim() || '이름 없는 곡';
+    const name = (S.songName || '').trim() || T('이름 없는 곡');
     fitText(name, W - 160, 88, '"Do Hyeon", sans-serif');
     ctx.fillText(name, W / 2, 170);
     ctx.fillStyle = 'rgba(230,233,240,0.62)';
     ctx.font = '500 34px "IBM Plex Sans KR", sans-serif';
-    let sub = '돌려돌려 작곡판으로 만든 곡';
-    if (build) sub = build.idx >= build.steps.length ? '완성! 이제 들어볼까요 ▶' : (build.idx === 0 ? '빈 원판에서 시작해요' : '코인 ' + build.idx + ' / ' + build.steps.length + '개');
+    let sub = T('돌려돌려 작곡판으로 만든 곡');
+    if (build) sub = build.idx >= build.steps.length ? T('완성! 이제 들어볼까요 ▶') : (build.idx === 0 ? T('빈 원판에서 시작해요') : T('코인 {a} / {b}개', { a: build.idx, b: build.steps.length }));
     if (build){ ctx.fillStyle = '#FFD25A'; ctx.font = '600 40px "IBM Plex Sans KR", sans-serif'; }
     ctx.fillText(sub, W / 2, 236);
 
@@ -261,7 +262,7 @@ export function initPerf(app){
     }
     return null;
   })();
-  if (!vMime){ recBtn.disabled = true; status.textContent = '이 브라우저는 영상 저장을 지원하지 않아요. 최신 Chrome이나 Safari를 써 주세요.'; }
+  if (!vMime){ recBtn.disabled = true; status.textContent = T('이 브라우저는 영상 저장을 지원하지 않아요. 최신 Chrome이나 Safari를 써 주세요.'); }
 
   recBtn.addEventListener('click', async () => {
     if (recording || !vMime) return;
@@ -282,7 +283,7 @@ export function initPerf(app){
       let pre = 0;
       if ($('perfBuild').checked){
         const tb = performance.now();
-        status.textContent = '녹화 중 · 만드는 과정을 담는 중이에요';
+        status.textContent = T('녹화 중 · 만드는 과정을 담는 중이에요');
         const ok = await runBuild();
         if (!ok) throw new Error('cancelled');
         pre = (performance.now() - tb) / 1000;
@@ -293,7 +294,7 @@ export function initPerf(app){
       await new Promise(res => {
         const tick = () => {
           const el = (performance.now() - t0) / 1000;
-          status.textContent = '녹화 중 ' + Math.min(Math.floor(el + pre), Math.ceil(dur + pre)) + ' / ' + Math.ceil(dur + pre) + '초 · 화면을 켜 둔 채 기다려 주세요';
+          status.textContent = T('녹화 중 {a} / {b}초 · 화면을 켜 둔 채 기다려 주세요', { a: Math.min(Math.floor(el + pre), Math.ceil(dur + pre)), b: Math.ceil(dur + pre) });
           if (el >= dur + 0.05) res(); else setTimeout(tick, 100);
         };
         tick();
@@ -301,10 +302,10 @@ export function initPerf(app){
       rec.stop(); player.stop(); renderPlay(); app.onPlayChange();
       await done;
       video = new Blob(chunks, { type: vMime.m });
-      status.textContent = '완성! "영상 받기"를 눌러 저장하세요. (' + vMime.ext.toUpperCase() + ', ' + (video.size / 1048576).toFixed(1) + 'MB)';
+      status.textContent = T('완성! "영상 받기"를 눌러 저장하세요. ({ext}, {mb}MB)', { ext: vMime.ext.toUpperCase(), mb: (video.size / 1048576).toFixed(1) });
       saveBtn.hidden = false;
     } catch (e){
-      status.textContent = '영상을 만들지 못했어요. 다시 시도해 주세요.';
+      status.textContent = T('영상을 만들지 못했어요. 다시 시도해 주세요.');
       cancelBuild(); player.stop(); renderPlay(); app.onPlayChange();
     } finally {
       recording = false; root.classList.remove('recording');
@@ -315,14 +316,14 @@ export function initPerf(app){
 
   saveBtn.addEventListener('click', async () => {
     if (!video) return;
-    const base = ((S.songName || '').trim() || '내 곡').replace(/[\\/:*?"<>|]/g, '');
+    const base = ((S.songName || '').trim() || T('내 곡')).replace(/[\\/:*?"<>|]/g, '');
     try {
-      const r = await app.exporter.saveFile(video, base + ' 공연.' + vMime.ext);
-      status.textContent = r === 'site' ? '영상을 받았어요. 다운로드 폴더를 확인해 주세요.' : '저장했어요.';
+      const r = await app.exporter.saveFile(video, base + T(' 공연') + '.' + vMime.ext);
+      status.textContent = r === 'site' ? T('영상을 받았어요. 다운로드 폴더를 확인해 주세요.') : T('저장했어요.');
     } catch (e){
-      status.textContent = e && e.code === 'declined' ? '저장을 취소했어요. 다시 누르면 저장할 수 있어요.'
-        : e && e.code === 'rate_limited' ? '잠시 후 다시 눌러 주세요.'
-        : '이 화면에서는 파일을 저장할 수 없어요.';
+      status.textContent = e && e.code === 'declined' ? T('저장을 취소했어요. 다시 누르면 저장할 수 있어요.')
+        : e && e.code === 'rate_limited' ? T('잠시 후 다시 눌러 주세요.')
+        : T('이 화면에서는 파일을 저장할 수 없어요.');
     }
   });
 

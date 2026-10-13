@@ -10,9 +10,27 @@ import { initExport } from './export.js';
 import { initGuide } from './guide.js';
 import { initPerf } from './perf.js';
 import { $, ls, readTokens, confirmTwice, fmtTime } from './util.js';
+import { T, IS_EN, LANG, translateDOM, setLang } from './i18n.js';
 
 // 독립 사이트(index.html)에서 열렸는지 표시. Claude 안에서는 app.html이 그대로 쓰임
 if (window.STANDALONE) document.documentElement.classList.add('site');
+
+// 언어: 화면 글자를 먼저 바꾸고 나서 나머지를 그림
+document.documentElement.lang = LANG;
+document.title = T('돌려돌려 작곡판');
+translateDOM(document.body);
+if (IS_EN){
+  const mf = document.querySelector('link[rel="manifest"]');
+  if (mf) mf.setAttribute('href', 'manifest-en.webmanifest');
+}
+document.querySelectorAll('#langSwitch button').forEach(b => {
+  b.setAttribute('aria-pressed', b.dataset.lang === LANG);
+  b.addEventListener('click', () => {
+    if (b.dataset.lang === LANG) return;
+    persistNow();
+    setLang(b.dataset.lang);
+  });
+});
 
 const TOK = ['bg', 'fg', 'muted', 'disc', 'disc-line', 'slot', 'hub', 'hub-fg', 'needle', 'accent', 'shelf', 'glow', 'note', 'chord'];
 let tok = readTokens(TOK), tokSig = JSON.stringify(tok);
@@ -24,7 +42,7 @@ const S = {
   song: null,
   sel: { sid: 'A', t: 0, d: 0 },   // 편집 중인 구간·악기·원판
   orderSel: 0,                     // 연주 순서에서 고른 칸
-  currentId: null, songName: '새 곡', dirty: false, isDemo: false, follow: false
+  currentId: null, songName: T('새 곡'), dirty: false, isDemo: false, follow: false
 };
 let mode = ls.get(LS_MODE);
 if (mode !== 'beginner' && mode !== 'expert') mode = null;
@@ -35,7 +53,7 @@ const isExpert = () => mode === 'expert';
     const raw = JSON.parse(ls.get(LS_STATE) || 'null');
     if (raw && raw.song){
       S.song = M.decodeSong(raw.song);
-      Object.assign(S, { sel: raw.sel || S.sel, currentId: raw.currentId || null, songName: raw.name || '새 곡', dirty: !!raw.dirty, follow: !!raw.follow });
+      Object.assign(S, { sel: raw.sel || S.sel, currentId: raw.currentId || null, songName: raw.name || T('새 곡'), dirty: !!raw.dirty, follow: !!raw.follow });
       return;
     }
   } catch (e){}
@@ -43,7 +61,7 @@ const isExpert = () => mode === 'expert';
     const old = JSON.parse(ls.get('coin-disc-v2') || 'null');
     if (old && Array.isArray(old.tracks) && old.tracks.length){
       S.song = M.fromLegacyTracks(old.tracks, old.mood, old.bpm);
-      Object.assign(S, { currentId: old.currentId || null, songName: old.name || '새 곡', dirty: !!old.dirty });
+      Object.assign(S, { currentId: old.currentId || null, songName: old.name || T('새 곡'), dirty: !!old.dirty });
       S.sel = { sid: 'A', t: Math.min(old.sel?.t ?? 0, S.song.tracks.length - 1), d: 0 };
       return;
     }
@@ -54,11 +72,15 @@ const isExpert = () => mode === 'expert';
 })();
 
 let persistTimer = null;
+function persistNow(){
+  clearTimeout(persistTimer);
+  ls.set(LS_STATE, JSON.stringify({
+    song: M.encodeSong(S.song), sel: S.sel, currentId: S.currentId, name: S.songName, dirty: S.dirty, follow: S.follow
+  }));
+}
 function persist(){
   clearTimeout(persistTimer);
-  persistTimer = setTimeout(() => ls.set(LS_STATE, JSON.stringify({
-    song: M.encodeSong(S.song), sel: S.sel, currentId: S.currentId, name: S.songName, dirty: S.dirty, follow: S.follow
-  })), 300);
+  persistTimer = setTimeout(persistNow, 300);
 }
 
 const secById = id => S.song.sections.find(s => s.id === id);
@@ -99,7 +121,7 @@ function paintDisc(cv, t, d){
   drawDisc(ctx, cv.width, { info: M.ringInfo(tr.inst, tr.scale, S.song.mood), grid: disc.g, spec: M.gridSpec(sec.meter, disc.div), tok });
 }
 const view = createView3D($('view3d'), {
-  towers: () => S.song.tracks.map((tr, t) => ({ label: INST[tr.inst].name + (tr.mute ? ' (꺼짐)' : ''), count: curSec().parts[t].count, mute: tr.mute })),
+  towers: () => S.song.tracks.map((tr, t) => ({ label: INST[tr.inst].name + (tr.mute ? T(' (꺼짐)') : ''), count: curSec().parts[t].count, mute: tr.mute })),
   paint: paintDisc,
   onSelect: (t, d) => select({ t, d }),
   tok: () => tok
@@ -166,7 +188,7 @@ const playBtn = $('play');
 playBtn.addEventListener('click', () => { player.toggle(); renderPlay(); });
 $('rewind').addEventListener('click', () => { player.seek(0); S.orderSel = 0; renderArrange(); });
 function renderPlay(){
-  const t = player.playing ? '■ 정지' : '▶ 재생';
+  const t = player.playing ? T('■ 정지') : T('▶ 재생');
   playBtn.textContent = t; $('mPlay').textContent = t;
   if (perf) perf.renderPlay();
 }
@@ -199,7 +221,7 @@ function blockStartQ(i){
 }
 function renderArrangeTotal(){
   const tl = player.tl;
-  $('arrTotal').textContent = '총 ' + tl.bars.length + '마디 · ' + fmtTime(player.secondsOf(tl.totalQ));
+  $('arrTotal').textContent = T('총 {n}마디 · {t}', { n: tl.bars.length, t: fmtTime(player.secondsOf(tl.totalQ)) });
 }
 function renderArrange(){
   const song = S.song, sec = curSec();
@@ -213,7 +235,7 @@ function renderArrange(){
     b.setAttribute('aria-selected', s.id === sec.id);
     b.innerHTML = '<b></b><span class="tab-sub"></span>';
     b.querySelector('b').textContent = M.sectionName(s);
-    b.querySelector('.tab-sub').textContent = s.meter + ' · ' + M.sectionBars(s) + '마디';
+    b.querySelector('.tab-sub').textContent = s.meter + ' · ' + T('{n}마디', { n: M.sectionBars(s) });
     b.onclick = () => select({ sid: s.id });
     secTabs.appendChild(b);
   });
@@ -230,10 +252,10 @@ function renderArrange(){
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'blk'; b.dataset.i = i;
     b.setAttribute('aria-current', i === S.orderSel);
-    b.setAttribute('aria-label', (i + 1) + '번째: 구간 ' + M.sectionName(s));
+    b.setAttribute('aria-label', T('{i}번째: 구간 {name}', { i: i + 1, name: M.sectionName(s) }));
     b.innerHTML = '<span class="blk-id"></span><span class="blk-n"></span>';
     b.querySelector('.blk-id').textContent = sid;
-    b.querySelector('.blk-n').textContent = M.sectionBars(s) + '마디';
+    b.querySelector('.blk-n').textContent = T('{n}마디', { n: M.sectionBars(s) });
     b.onclick = () => {
       S.orderSel = i;
       if (!player.playing) player.seek(blockStartQ(i));
@@ -242,7 +264,7 @@ function renderArrange(){
     orderStrip.appendChild(b);
   });
   $('ordAdd').disabled = song.order.length >= MAX_ORDER;
-  $('ordAdd').textContent = '+ 구간 ' + sec.id + ' 넣기';
+  $('ordAdd').textContent = T('+ 구간 {id} 넣기', { id: sec.id });
   $('ordLeft').disabled = S.orderSel <= 0;
   $('ordRight').disabled = S.orderSel >= song.order.length - 1;
   $('ordDel').disabled = song.order.length <= 1;
@@ -270,7 +292,7 @@ $('secDup').addEventListener('click', () => {
 $('secDel').addEventListener('click', e => {
   const sec = curSec();
   if (S.song.sections.length <= 1) return;
-  if (!confirmTwice('secdel-' + sec.id, e.currentTarget, '구간 ' + sec.id + ' 삭제')) return;
+  if (!confirmTwice('secdel-' + sec.id, e.currentTarget, T('구간 {id} 삭제', { id: sec.id }))) return;
   S.song.sections = S.song.sections.filter(s => s !== sec);
   S.song.order = S.song.order.filter(id => id !== sec.id);
   if (!S.song.order.length) S.song.order = [S.song.sections[0].id];
@@ -291,10 +313,10 @@ segMeter.addEventListener('click', e => {
   const res = M.convertMeter(sec, to);
   if (res.dropped || res.moved){
     const parts = [];
-    if (res.moved) parts.push('셋잇단 코인 ' + res.moved + '개가 가장 가까운 칸으로 옮겨지고');
-    if (res.dropped) parts.push('마디 뒤쪽 코인 ' + res.dropped + '개가 빠져요');
-    if (!confirmTwice('meter-' + sec.id + to, b, '한 번 더')){
-      arrMsg.textContent = to + '박자로 바꾸면 ' + parts.join(', ') + '. 계속하려면 한 번 더 누르세요.';
+    if (res.moved) parts.push(T('셋잇단 코인 {n}개가 가장 가까운 칸으로 옮겨지고', { n: res.moved }));
+    if (res.dropped) parts.push(T('마디 뒤쪽 코인 {n}개가 빠져요', { n: res.dropped }));
+    if (!confirmTwice('meter-' + sec.id + to, b, T('한 번 더'))){
+      arrMsg.textContent = T('{m}박자로 바꾸면 {parts}. 계속하려면 한 번 더 누르세요.', { m: to, parts: parts.join(', ') });
       return;
     }
   }
@@ -335,7 +357,7 @@ function renderTracks(){
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'tab'; b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', t === S.sel.t);
-    b.textContent = INST[tr.inst].name + (tr.mute ? ' · 꺼짐' : '');
+    b.textContent = INST[tr.inst].name + (tr.mute ? T(' · 꺼짐') : '');
     b.onclick = () => select({ t });
     trackTabs.appendChild(b);
   });
@@ -343,7 +365,7 @@ function renderTracks(){
   instSel.value = tr.inst;
   countSel.value = String(curPart().count);
   muteBtn.setAttribute('aria-pressed', tr.mute);
-  muteBtn.textContent = tr.mute ? '소리 켜기' : '음소거';
+  muteBtn.textContent = tr.mute ? T('소리 켜기') : T('음소거');
   delBtn.disabled = S.song.tracks.length <= 1;
   $('addTrack').disabled = S.song.tracks.length >= MAX_TRACKS;
   segScale.classList.toggle('dis', tr.inst === 'drum');
@@ -361,7 +383,7 @@ countSel.addEventListener('change', () => {
 muteBtn.addEventListener('click', () => { curTrack().mute = !curTrack().mute; structural(false); });
 delBtn.addEventListener('click', e => {
   if (S.song.tracks.length <= 1) return;
-  if (!confirmTwice('trdel-' + S.sel.t, e.currentTarget, '모든 구간에서 삭제')) return;
+  if (!confirmTwice('trdel-' + S.sel.t, e.currentTarget, T('모든 구간에서 삭제'))) return;
   M.removeTrack(S.song, S.sel.t);
   S.sel.t = Math.max(0, S.sel.t - 1); S.sel.d = 0;
   lastHit.clear();
@@ -381,10 +403,10 @@ segScale.addEventListener('click', e => {
   const res = M.convertScale(S.song, S.sel.t, to);
   if (res.dropped || res.cleared){
     const parts = [];
-    if (res.dropped) parts.push('파·시 코인 ' + res.dropped + '개가 빠지고');
-    if (res.cleared) parts.push('♯/♭ ' + res.cleared + '개가 풀려요');
-    if (!confirmTwice('scale-' + S.sel.t, b, '한 번 더')){
-      discMsg.textContent = '5음으로 바꾸면 모든 구간에서 ' + parts.join(', ') + '. 계속하려면 한 번 더 누르세요.';
+    if (res.dropped) parts.push(T('파·시 코인 {n}개가 빠지고', { n: res.dropped }));
+    if (res.cleared) parts.push(T('♯/♭ {n}개가 풀려요', { n: res.cleared }));
+    if (!confirmTwice('scale-' + S.sel.t, b, T('한 번 더'))){
+      discMsg.textContent = T('5음으로 바꾸면 모든 구간에서 {parts}. 계속하려면 한 번 더 누르세요.', { parts: parts.join(', ') });
       return;
     }
   }
@@ -417,12 +439,12 @@ function renderDiscPanel(){
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'tab'; b.dataset.d = d; b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', d === S.sel.d);
-    b.innerHTML = (d + 1) + '번<span class="live" aria-hidden="true"></span>';
+    b.innerHTML = T('{n}번', { n: d + 1 }) + '<span class="live" aria-hidden="true"></span>';
     b.onclick = () => select({ d });
     discTabs.appendChild(b);
   }
   $('copyPrev').disabled = S.sel.d === 0;
-  $('discSection').textContent = (S.song.sections.length > 1 || isExpert()) ? '구간 ' + M.sectionName(sec) : '';
+  $('discSection').textContent = (S.song.sections.length > 1 || isExpert()) ? T('구간 {name}', { name: M.sectionName(sec) }) : '';
 
   const isDrum = tr.inst === 'drum', sc = tr.scale === 7 ? 7 : 5;
   segType.classList.toggle('dis', isDrum);
@@ -433,15 +455,15 @@ function renderDiscPanel(){
   $('divRow').hidden = !tripletOk && disc.div !== 't';
   segDiv.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === disc.div));
   const slots = disc.g[0].length, spec = M.gridSpec(sec.meter, disc.div);
-  $('divInfo').textContent = '한 바퀴 ' + slots + '칸 · ' + (sec.meter === '6/8' ? '8분음표 하나에 ' + spec.mid + '칸' : '한 박에 ' + spec.strong + '칸');
+  $('divInfo').textContent = T('한 바퀴 {n}칸', { n: slots }) + ' · ' + (sec.meter === '6/8' ? T('8분음표 하나에 {n}칸', { n: spec.mid }) : T('한 박에 {n}칸', { n: spec.strong }));
 
   let hint;
-  if (isDrum) hint = '드럼은 고리마다 다른 소리가 나요. 안쪽부터 킥, 스네어, 박수, 닫힌 하이햇, 열린 하이햇이에요. 세기만 고를 수 있어요.';
+  if (isDrum) hint = T('드럼은 고리마다 다른 소리가 나요. 안쪽부터 킥, 스네어, 박수, 닫힌 하이햇, 열린 하이햇이에요. 세기만 고를 수 있어요.');
   else {
-    hint = '안쪽 고리일수록 낮은 음이고, 바늘 옆 이름표가 고리의 음이에요. 같은 바퀴살에 여러 코인을 놓으면 함께 울려요. 화음 코인은 하나만 놓아도 어울리는 음 3개가 같이 나요. 놓인 코인을 누르면 빠집니다.';
-    if (sc === 7) hint += ' 빗금 고리(파·시)와 ♯/♭ 코인은 긴장감을 주는 음이라, 어색하게 들리면 옆 음으로 옮겨 보세요.';
+    hint = T('안쪽 고리일수록 낮은 음이고, 바늘 옆 이름표가 고리의 음이에요. 같은 바퀴살에 여러 코인을 놓으면 함께 울려요. 화음 코인은 하나만 놓아도 어울리는 음 3개가 같이 나요. 놓인 코인을 누르면 빠집니다.');
+    if (sc === 7) hint += ' ' + T('빗금 고리(파·시)와 ♯/♭ 코인은 긴장감을 주는 음이라, 어색하게 들리면 옆 음으로 옮겨 보세요.');
   }
-  if (disc.div === 't') hint += ' 이 원판은 셋잇단이라 한 박이 3칸으로 나뉘어 있어요.';
+  if (disc.div === 't') hint += ' ' + T('이 원판은 셋잇단이라 한 박이 3칸으로 나뉘어 있어요.');
   $('discHint').textContent = hint;
 }
 
@@ -451,11 +473,11 @@ segDiv.addEventListener('click', e => {
   if (disc.div === to || (to === 't' && !M.canTriplet(sec.meter))) return;
   const res = M.regrid(disc, M.slotsOf(sec.meter, to), to);
   if (res.dropped || res.moved){
-    if (!confirmTwice('div-' + S.sel.sid + S.sel.t + S.sel.d, b, '한 번 더')){
+    if (!confirmTwice('div-' + S.sel.sid + S.sel.t + S.sel.d, b, T('한 번 더'))){
       const parts = [];
-      if (res.moved) parts.push('코인 ' + res.moved + '개는 가장 가까운 칸으로 옮겨지고');
-      if (res.dropped) parts.push(res.dropped + '개는 자리가 겹쳐 빠져요');
-      discMsg.textContent = '칸 수가 바뀌어서 ' + parts.join(', ') + '. 계속하려면 한 번 더 누르세요.';
+      if (res.moved) parts.push(T('코인 {n}개는 가장 가까운 칸으로 옮겨지고', { n: res.moved }));
+      if (res.dropped) parts.push(T('{n}개는 자리가 겹쳐 빠져요', { n: res.dropped }));
+      discMsg.textContent = T('칸 수가 바뀌어서 {parts}. 계속하려면 한 번 더 누르세요.', { parts: parts.join(', ') });
       return;
     }
   }
@@ -549,7 +571,7 @@ function draw2d(loc){
   drawDisc(cx2d, CW, {
     info: M.ringInfo(tr.inst, tr.scale, S.song.mood), grid: disc.g, spec: M.gridSpec(sec.meter, disc.div),
     pos: edPos, needle: true, labels: true, tok,
-    hubText: [INST[tr.inst].name, (S.song.sections.length > 1 ? sec.id + ' · ' : '') + (S.sel.d + 1) + '번 원판'],
+    hubText: [INST[tr.inst].name, (S.song.sections.length > 1 ? sec.id + ' · ' : '') + T('{n}번 원판', { n: S.sel.d + 1 })],
     drop: (r, k) => {
       const p = placedAt.get(hitKey(S.sel.sid, S.sel.t, S.sel.d, r, k));
       if (p == null) return 1;
@@ -564,7 +586,7 @@ function draw2d(loc){
       return (a >= 0 && a < 0.35) ? 1 - a / 0.35 : 0;
     }
   });
-  const st = active && player.playing ? '지금 연주 중' : active ? '다음에 연주됨' : '대기 중';
+  const st = active && player.playing ? T('지금 연주 중') : active ? T('다음에 연주됨') : T('대기 중');
   if ($('discStatus').textContent !== st) $('discStatus').textContent = st;
 }
 
@@ -574,8 +596,8 @@ function renderModeUI(){
   $('app').dataset.mode = m;
   document.querySelectorAll('#modeSwitch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
   $('lead').textContent = m === 'expert'
-    ? '구간을 만들고 순서를 짜서 한 곡을 완성해 보세요. 박자표와 셋잇단음표, 7음과 ♯·♭도 쓸 수 있어요.'
-    : '원판의 칸을 눌러 코인을 올리고, 악기마다 원판을 쌓아 곡을 만들어 보세요.';
+    ? T('구간을 만들고 순서를 짜서 한 곡을 완성해 보세요. 박자표와 셋잇단음표, 7음과 ♯·♭도 쓸 수 있어요.')
+    : T('원판의 칸을 눌러 코인을 올리고, 악기마다 원판을 쌓아 곡을 만들어 보세요.');
 }
 function renderAll(){
   renderModeUI();
@@ -612,8 +634,8 @@ function frame(ts){
     lastBarKey = key;
     const sec = secById(bar.sid), single = S.song.sections.length === 1 && S.song.order.length === 1;
     $('posText').textContent = $('mPos').textContent = single
-      ? '마디 ' + (loc.i + 1) + ' / ' + tl.bars.length
-      : '구간 ' + bar.sid + ' · ' + (bar.b + 1) + '/' + M.sectionBars(sec) + '마디 · 전체 ' + (loc.i + 1) + '/' + tl.bars.length;
+      ? T('마디 {a} / {b}', { a: loc.i + 1, b: tl.bars.length })
+      : T('구간 {sid} · {b}/{nb}마디 · 전체 {i}/{n}', { sid: bar.sid, b: bar.b + 1, nb: M.sectionBars(sec), i: loc.i + 1, n: tl.bars.length });
     orderStrip.querySelectorAll('.blk').forEach(b => b.classList.toggle('playing', player.playing && +b.dataset.i === bar.oi));
     const part = curPart();
     discTabs.querySelectorAll('.tab').forEach(b => b.classList.toggle('playing', bar.sid === S.sel.sid && +b.dataset.d === bar.b % part.count));
