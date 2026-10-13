@@ -1,4 +1,4 @@
-// 내 곡: 저장, 불러오기, 삭제. 계정 저장소가 있으면 그쪽에, 없으면 이 브라우저에
+// 내 곡: 저장, 불러오기, 이름 바꾸기, 복제, 삭제. 계정 저장소가 있으면 그쪽에, 없으면 이 브라우저에
 import { $, ls, confirmTwice } from './util.js';
 import { INST } from './constants.js';
 import { encodeSong, decodeSong, blankSong } from './model.js';
@@ -43,6 +43,9 @@ export function initSongs(app){
   const fmtDate = ts => new Date(ts).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const newId = () => 'song-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+  // 목록 줄: 누르면 불러오기, ⋯ 를 누르면 그 줄 아래에 이름 바꾸기·복제·삭제가 펼쳐짐
+  let menuFor = null, renameFor = null;
+
   function renderList(){
     listEl.innerHTML = '';
     if (!songs.length){
@@ -51,20 +54,85 @@ export function initSongs(app){
       listEl.appendChild(p); return;
     }
     songs.forEach(s => {
-      const li = document.createElement('div'); li.className = 'song' + (s.id === S.currentId ? ' current' : '');
-      const info = document.createElement('div'); info.className = 'song-info';
-      const nm = document.createElement('div'); nm.className = 'song-name'; nm.textContent = s.name || '이름 없는 곡';
-      const meta = document.createElement('div'); meta.className = 'song-meta';
+      const li = document.createElement('div');
+      li.className = 'song' + (s.id === S.currentId ? ' current' : '') + (menuFor === s.id ? ' open' : '');
+      const row = document.createElement('div'); row.className = 'song-row';
       const insts = (s.insts || []).map(i => INST[i] ? INST[i].name : i).join('·');
-      meta.textContent = (s.id === S.currentId ? '편집 중 · ' : '') + insts + ' · ' + (s.bars || 1) + '마디 · ' + fmtDate(s.updatedAt);
-      info.append(nm, meta);
-      const load = document.createElement('button'); load.type = 'button'; load.textContent = '불러오기';
-      load.onclick = () => loadSong(s, load);
-      const del = document.createElement('button'); del.type = 'button'; del.textContent = '삭제';
-      del.onclick = () => deleteSong(s, del);
-      li.append(info, load, del);
+      const metaText = (s.id === S.currentId ? '편집 중 · ' : '') + insts + ' · ' + (s.bars || 1) + '마디 · ' + fmtDate(s.updatedAt);
+
+      if (renameFor === s.id){
+        const form = document.createElement('form'); form.className = 'song-rename';
+        const input = document.createElement('input');
+        input.type = 'text'; input.maxLength = 40; input.value = s.name || ''; input.className = 'text-in';
+        input.setAttribute('aria-label', '새 곡 이름'); input.id = 'rename-' + s.id;
+        const ok = document.createElement('button'); ok.type = 'submit'; ok.className = 'primary'; ok.textContent = '✓'; ok.setAttribute('aria-label', '이름 바꾸기 확정');
+        const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = '✕'; cancel.setAttribute('aria-label', '취소');
+        form.onsubmit = e => { e.preventDefault(); renameSong(s, input.value); };
+        cancel.onclick = () => { renameFor = null; renderList(); };
+        input.onkeydown = e => { if (e.key === 'Escape'){ e.preventDefault(); renameFor = null; renderList(); } };
+        form.append(input, ok, cancel);
+        row.append(form);
+        li.append(row);
+        listEl.appendChild(li);
+        setTimeout(() => { input.focus(); input.select(); }, 0);
+        return;
+      }
+
+      const main = document.createElement('button');
+      main.type = 'button'; main.className = 'song-main';
+      main.setAttribute('aria-label', (s.name || '이름 없는 곡') + ' 불러오기');
+      const nm = document.createElement('span'); nm.className = 'song-name'; nm.textContent = s.name || '이름 없는 곡';
+      const meta = document.createElement('span'); meta.className = 'song-meta'; meta.textContent = metaText;
+      main.append(nm, meta);
+      main.onclick = () => loadSong(s, main);
+      const more = document.createElement('button');
+      more.type = 'button'; more.className = 'song-more'; more.textContent = '⋯';
+      more.setAttribute('aria-label', (s.name || '이름 없는 곡') + ' 메뉴');
+      more.setAttribute('aria-expanded', menuFor === s.id);
+      more.onclick = () => { menuFor = menuFor === s.id ? null : s.id; renderList(); };
+      row.append(main, more);
+      li.append(row);
+
+      if (menuFor === s.id){
+        const menu = document.createElement('div'); menu.className = 'song-menu';
+        const ren = document.createElement('button'); ren.type = 'button'; ren.textContent = '이름 바꾸기';
+        ren.onclick = () => { menuFor = null; renameFor = s.id; renderList(); };
+        const dup = document.createElement('button'); dup.type = 'button'; dup.textContent = '복제';
+        dup.onclick = () => duplicateSong(s);
+        const del = document.createElement('button'); del.type = 'button'; del.className = 'danger'; del.textContent = '삭제';
+        del.onclick = () => deleteSong(s, del);
+        menu.append(ren, dup, del);
+        li.append(menu);
+      }
       listEl.appendChild(li);
     });
+  }
+
+  async function renameSong(s, value){
+    const name = value.trim().slice(0, 40) || '이름 없는 곡';
+    renameFor = null;
+    if (name === s.name){ renderList(); return; }
+    try {
+      if (remote) await remote.doc(s.id).update({ name });
+      else { const o = readLocal(); if (o[s.id]){ o[s.id].name = name; writeLocal(o); } }
+      if (s.id === S.currentId){ S.songName = name; nameEl.value = name; app.persist(); }
+      await refresh();
+      stateEl.textContent = '이름을 바꿨어요';
+    } catch (e){ stateEl.textContent = '이름을 바꾸지 못했어요. 잠시 후 다시 해 주세요.'; renderList(); }
+  }
+
+  async function duplicateSong(s){
+    menuFor = null;
+    const id = newId();
+    const { id: _old, ...body } = s;
+    try {
+      await store.put(id, { ...body, name: (s.name || '이름 없는 곡').slice(0, 37) + ' 사본', updatedAt: Date.now() });
+      await refresh();
+      stateEl.textContent = '복제했어요';
+    } catch (e){
+      stateEl.textContent = e && e.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요. 안 쓰는 곡을 지우고 다시 해 주세요.' : '복제하지 못했어요. 잠시 후 다시 해 주세요.';
+      renderList();
+    }
   }
 
   async function refresh(){
@@ -112,6 +180,7 @@ export function initSongs(app){
     try {
       await store.del(s.id);
       if (s.id === S.currentId){ S.currentId = null; S.dirty = true; renderSaveState(); app.persist(); }
+      menuFor = null;
       await refresh();
     } catch (e){ stateEl.textContent = '삭제하지 못했어요. 잠시 후 다시 눌러 주세요.'; }
   }
@@ -129,6 +198,7 @@ export function initSongs(app){
   nameEl.addEventListener('input', () => { S.songName = nameEl.value; app.touch(); });
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); save(false); }
+    if (e.key === 'Escape' && menuFor){ menuFor = null; renderList(); }
   });
 
   nameEl.value = S.songName;
