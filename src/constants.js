@@ -6,10 +6,12 @@ export const INST = {
   musicbox: { name: T('오르골'), base: 72 },
   kalimba:  { name: T('칼림바'), base: 60 },
   marimba:  { name: T('마림바'), base: 48 },
+  violin:   { name: T('바이올린'), base: 60 },
+  cello:    { name: T('첼로'), base: 48 },
   bass:     { name: T('베이스'), base: 36 },
   drum:     { name: T('드럼') }
 };
-export const INST_ORDER = ['musicbox', 'piano', 'kalimba', 'marimba', 'bass', 'drum'];
+export const INST_ORDER = ['musicbox', 'piano', 'kalimba', 'marimba', 'violin', 'cello', 'bass', 'drum'];
 export const DRUMS = ['킥', '스네어', '박수', '닫힌 하이햇', '열린 하이햇'].map(s => T(s));
 // 원판 이름표용 짧은 이름
 export const DRUM_SHORT = ['킥', '스네어', '박수', '하이햇', '열린햇'].map(s => T(s));

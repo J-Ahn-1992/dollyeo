@@ -160,6 +160,8 @@ export const EN_DICT = {
   '오르골': 'Music box',
   '칼림바': 'Kalimba',
   '마림바': 'Marimba',
+  '바이올린': 'Violin',
+  '첼로': 'Cello',
   '베이스': 'Bass',
   '드럼': 'Drums',
   '원판 수': 'Discs',

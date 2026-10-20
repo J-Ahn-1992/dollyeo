@@ -12,7 +12,10 @@ const VOICE = {
   musicbox: { peak: 0.15, tc: 0.6,  sus: 0.25, rel: 0.25 },
   bass:     { peak: 0.3,  tc: 0.15, sus: 0.7,  rel: 0.08 },
   kalimba:  { peak: 0.26, tc: 0.32, perc: true },
-  marimba:  { peak: 0.3,  tc: 0.2,  perc: true }
+  marimba:  { peak: 0.3,  tc: 0.2,  perc: true },
+  // 현악기: 활로 켜는 소리라 천천히 커지고, 짧은 음도 조금 끌다가 사라짐
+  violin:   { peak: 0.16, att: 0.07, rel: 0.22, bow: true, vib: 5.5, depth: 14, cut: 4200 },
+  cello:    { peak: 0.22, att: 0.09, rel: 0.28, bow: true, vib: 4.8, depth: 10, cut: 2200 }
 };
 
 // 방 울림(리버브)용 잔향 소리를 직접 만듦
@@ -79,7 +82,13 @@ export class Engine {
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
     let end;
-    if (V.perc){
+    if (V.bow){
+      const hold = t + Math.max(dur, 0.12);
+      g.gain.linearRampToValueAtTime(peak, t + V.att);
+      g.gain.setTargetAtTime(peak * 0.82, t + V.att, 0.15);
+      g.gain.setTargetAtTime(0.0001, hold, V.rel);
+      end = hold + V.rel * 6;
+    } else if (V.perc){
       const tc = V.tc * (long ? 1 + Math.min(dur, 2) * 1.5 : 1);
       g.gain.linearRampToValueAtTime(peak, t + 0.003);
       g.gain.setTargetAtTime(0.0001, t + 0.003, tc);
@@ -95,7 +104,21 @@ export class Engine {
     }
     g.connect(out);
 
-    if (inst === 'piano'){
+    if (V.bow){
+      // 톱니파 두 개를 살짝 어긋나게 + 비브라토(조금 늦게 시작) + 몸통 울림 필터
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7;
+      lp.frequency.setValueAtTime(V.cut * 0.6, t); lp.frequency.linearRampToValueAtTime(V.cut, t + V.att * 2);
+      const body = ctx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = inst === 'violin' ? 2800 : 900; body.gain.value = 4; body.Q.value = 1.2;
+      lp.connect(body); body.connect(g);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = V.vib;
+      const vd = ctx.createGain(); vd.gain.setValueAtTime(0, t); vd.gain.linearRampToValueAtTime(V.depth, t + 0.35);
+      lfo.connect(vd); lfo.start(t); lfo.stop(end);
+      [-6, 6].forEach(dt => { const o = this.osc('sawtooth', f, t, end, lp); o.detune.value = dt; vd.connect(o.detune); });
+      // 활이 줄에 닿는 순간의 거친 소리
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 4; bp.Q.value = 2;
+      const ns = ctx.createGain(); ns.gain.setValueAtTime(0.05, t); ns.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      bp.connect(ns); ns.connect(g); this.noiseSrc(t, 0.14, bp);
+    } else if (inst === 'piano'){
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
       lp.frequency.setValueAtTime(5000, t); lp.frequency.exponentialRampToValueAtTime(900, t + 0.9);
       lp.connect(g);
